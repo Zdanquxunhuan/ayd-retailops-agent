@@ -88,11 +88,11 @@ class StageTwoTests {
         var policy=new ReportPolicy(clock);var planner=new AskingPlanner();
         try(var repo=new FileTaskRepository(dir,json);var runner=new DiagnosisRunner(gateway,policy,clock,8,12,10);
             var service=new TaskService(repo,runner,planner,new OfflinePlanner(policy,true),catalog,gateway,clock)) {
-            Task t=service.create(new Input("why","A001","O100","synced","investigation"));
-            Task waiting=await(service,t.id,Status.WAITING_USER);
-            // Wait for the worker's final snapshot before simulating expiration.
-            service.close();
-            waiting=repo.get(t.id);waiting.agentState.waitingUntil=Instant.EPOCH;repo.save(waiting);
+            Task t=new Task();t.id=UUID.randomUUID().toString();
+            t.input=new Input("why","A001","O100","synced","investigation");
+            t.status=Status.WAITING_USER;t.investigation=new Trace();
+            t.agentState.waitingUntil=Instant.EPOCH;repo.save(t);
+            Task waiting=repo.get(t.id);
             Task expired=service.resume(t.id,waiting.version,"昨天");
             assertEquals(Status.NEEDS_HUMAN,expired.status);
             assertEquals("USER_WAIT_EXPIRED",expired.events.get(expired.events.size()-1).code());

@@ -33,7 +33,7 @@ public class TaskService implements AutoCloseable {
         for (Task task : repository.all()) {
             if (!task.terminal() && task.status != Status.CLARIFYING && task.status != Status.WAITING_USER
                     && task.status != Status.PAUSED) {
-                if ("investigation".equals(task.input.strategy()) && task.investigation != null)
+                if ("investigation".equals(task.input.strategy()))
                     runner.event(task, Status.PAUSED, "RESTART_PAUSED", "调查现场已恢复，请提交版本号继续。", repository::save);
                 else runner.unresolved(task, Status.NEEDS_HUMAN, "RESTART_INTERRUPTED", repository::save);
             }
@@ -167,7 +167,6 @@ public class TaskService implements AutoCloseable {
     }
 
     public void close() {
-        cancellations.values().forEach(f -> f.set(true));
         worker.shutdownNow();
         try {
             worker.awaitTermination(5, TimeUnit.SECONDS);

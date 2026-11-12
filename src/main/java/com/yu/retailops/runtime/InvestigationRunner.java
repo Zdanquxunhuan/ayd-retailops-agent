@@ -162,7 +162,7 @@ public class InvestigationRunner {
             finish(task, Status.NEEDS_HUMAN, "MODEL_TIMEOUT", checkpoint);
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-            finish(task, Status.NEEDS_HUMAN, "INTERRUPTED", checkpoint);
+            events.event(task, Status.PAUSED, "WORKER_INTERRUPTED", "执行被中断，保留现场等待恢复。", checkpoint);
         } catch (ExecutionException failed) {
             finish(task, Status.NEEDS_HUMAN, failed.getCause() instanceof ModelCallException model ? model.code() : "MODEL_ERROR", checkpoint);
         } catch (RuntimeException failure) {
