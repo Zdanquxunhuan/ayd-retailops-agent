@@ -10,7 +10,7 @@ public final class Diagnosis {
     private Diagnosis() {
     }
 
-    public enum Status {CREATED, CLARIFYING, PLANNING, EXECUTING_TOOL, REASONING, COMPLETED, NEEDS_HUMAN, FAILED, CANCELLED}
+    public enum Status {CREATED, CLARIFYING, WAITING_USER, PAUSED, PLANNING, EXECUTING_TOOL, REASONING, COMPLETED, NEEDS_HUMAN, FAILED, CANCELLED}
 
     public enum Outcome {ALREADY_SYNCED, REPUSH_RECOMMENDED, RESTORE_RECOMMENDED, OUTSIDE_SEARCH_WINDOW, UNRESOLVED}
 
@@ -78,9 +78,11 @@ public final class Diagnosis {
         public List<Event> events = new ArrayList<>();
         public Report report;
         public Investigation.Trace investigation;
+        public AgentState agentState = new AgentState();
 
         public boolean terminal() {
             return Set.of(Status.COMPLETED, Status.NEEDS_HUMAN, Status.FAILED, Status.CANCELLED).contains(status);
         }
     }
 }
+

@@ -31,8 +31,12 @@ public class TaskService implements AutoCloseable {
         this.gateway = gateway;
         this.clock = clock;
         for (Task task : repository.all()) {
-            if (!task.terminal() && task.status != Status.CLARIFYING)
-                runner.unresolved(task, Status.NEEDS_HUMAN, "RESTART_INTERRUPTED", repository::save);
+            if (!task.terminal() && task.status != Status.CLARIFYING && task.status != Status.WAITING_USER
+                    && task.status != Status.PAUSED) {
+                if ("investigation".equals(task.input.strategy()) && task.investigation != null)
+                    runner.event(task, Status.PAUSED, "RESTART_PAUSED", "调查现场已恢复，请提交版本号继续。", repository::save);
+                else runner.unresolved(task, Status.NEEDS_HUMAN, "RESTART_INTERRUPTED", repository::save);
+            }
         }
     }
 
@@ -98,6 +102,30 @@ public class TaskService implements AutoCloseable {
         return get(id);
     }
 
+    /** Single-process CAS plus ownership; repository directory lock excludes other processes. */
+    public synchronized Task resume(String id, long expectedVersion, String answer) {
+        Task task = get(id);
+        if (task.version != expectedVersion || cancellations.containsKey(id)
+                || (task.status != Status.WAITING_USER && task.status != Status.PAUSED)) throw new ConflictException();
+        if (!"agent-state-v1".equals(task.agentState.schemaVersion)) throw new ConflictException();
+        if (task.status == Status.WAITING_USER) {
+            if (task.agentState.waitingUntil == null || !clock.instant().isBefore(task.agentState.waitingUntil)) {
+                runner.unresolved(task, Status.NEEDS_HUMAN, "USER_WAIT_EXPIRED", repository::save);
+                return get(id);
+            }
+            if (answer == null || answer.isBlank() || answer.length() > 2000 || task.agentState.answers.size() >= 8)
+                throw new IllegalArgumentException("Answer required (max 2000 characters, 8 turns)");
+            task.agentState.answers.add(new com.yu.retailops.domain.AgentState.UserAnswer(
+                    task.agentState.question, answer, clock.instant()));
+            task.agentState.question = null;
+            task.agentState.waitingUntil = null;
+        } else if (answer != null && !answer.isBlank()) throw new IllegalArgumentException("No question pending");
+        task.report = null;
+        runner.event(task, Status.CREATED, "RESUME_ACCEPTED", "恢复调查，保留累计预算与证据。", repository::save);
+        submit(task);
+        return get(id);
+    }
+
     public synchronized Task cancel(String id) {
         Task task = get(id);
         if (task.terminal()) return task;
@@ -137,3 +165,4 @@ public class TaskService implements AutoCloseable {
         }
     }
 }
+

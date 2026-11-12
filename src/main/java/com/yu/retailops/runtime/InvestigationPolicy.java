@@ -63,8 +63,9 @@ public class InvestigationPolicy {
             gateway.validate(task.input, new Decision(DecisionType.CALL_TOOL, q.tool(), q.arguments(), null, List.of(), q.questionToVerify()));
         } else {
             require(p.query() == null, "INVALID_INVESTIGATION");
-            if (p.action() == Action.NEEDS_HUMAN)
+            if (p.action() == Action.NEEDS_HUMAN || p.action() == Action.ASK_USER)
                 require(!p.unresolvedQuestions().isEmpty(), "INVALID_INVESTIGATION");
+            if (p.action() == Action.ASK_USER) require(p.claims().isEmpty(), "INVALID_INVESTIGATION");
             if (p.action() == Action.DIAGNOSIS_READY) {
                 require(task.evidence.stream().anyMatch(e -> Set.of(ReadOnlyGateway.LOGS, ReadOnlyGateway.PUSH_HISTORY).contains(e.tool()))
                         && p.claims().stream().anyMatch(c -> c.qualification() == Qualification.HYPOTHESIS), "INSUFFICIENT_INVESTIGATION");
@@ -120,3 +121,4 @@ public class InvestigationPolicy {
         if (!condition) throw new IllegalArgumentException(code);
     }
 }
+
