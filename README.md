@@ -1,5 +1,7 @@
 # OmniOps Agent
 
+Stage 2 新增有状态补问与单机恢复，使用、设计及验证边界见 [Stage 2 说明](docs/stage2-stateful-investigation.md)。以下 Stage 1E 记录保留为此前阶段结果。
+
 当前进展：[Stage 1E 增量契约](docs/stage1e-delta-contract.md)，Prompt v8，68 项测试通过。本轮 50 次额度已使用 28 次。真实模型的未知处理与日志注入样本有改善，反证调查仍未完整通过。先看 [正常使用的例子](docs/stage1e-user-examples.md)，再看 [实测结果](docs/stage1e-live-verification.md)。
 
 此前阶段：[Stage 1D 假设修正](docs/stage1d-hypothesis-review.md) 与其 [实测记录](docs/stage1d-live-verification.md)。当前实现继续保留时间范围、逐项复核和一次受预算约束的契约纠正。
@@ -126,3 +128,4 @@ DeepSeek 官方接口于 2026-11-11 返回 `deepseek-flash`、`deepseek-v4-pro`�
 - `persistence/FileTaskRepository.java`：单机原子快照。
 - `evaluation/EvaluationRunner.java`：同条件对照、逐例评分与轨迹导出。
 - `docs/design/`：V0.2 架构评审与阶段设计；原设计描述目标，本 README 描述已实现范围。
+

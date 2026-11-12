@@ -55,6 +55,13 @@ public class TaskController {
         return tasks.clarify(id, input.storeId(), input.orderId(), input.expectedVersion());
     }
 
+    public record ResumeInput(long expectedVersion, String answer) {}
+
+    @PostMapping("/tasks/{id}/resume")
+    public ResponseEntity<Task> resume(@PathVariable String id, @RequestBody ResumeInput input) {
+        return ResponseEntity.accepted().body(tasks.resume(id, input.expectedVersion(), input.answer()));
+    }
+
     @PostMapping("/tasks/{id}/cancel")
     public ResponseEntity<Task> cancel(@PathVariable String id) {
         return ResponseEntity.accepted().body(tasks.cancel(id));
@@ -89,3 +96,4 @@ public class TaskController {
         return Map.of("error", "VERSION_OR_STATE_CONFLICT");
     }
 }
+

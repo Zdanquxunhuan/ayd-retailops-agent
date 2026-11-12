@@ -1,0 +1,19 @@
+name: Java tests
+on:
+  push:
+    branches: [master, stage2-stateful-investigation]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - run: bash mvnw -B -ntp test

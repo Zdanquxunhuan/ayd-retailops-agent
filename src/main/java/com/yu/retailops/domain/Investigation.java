@@ -16,7 +16,7 @@ public final class Investigation {
 
     public enum Environment {SIMULATION}
 
-    public enum Action {QUERY, DIAGNOSIS_READY, NEEDS_HUMAN}
+    public enum Action {QUERY, ASK_USER, DIAGNOSIS_READY, NEEDS_HUMAN}
 
     public enum HypothesisStatus {PROPOSED, SUPPORTED, CONTRADICTED, UNCONFIRMED}
 
@@ -89,3 +89,4 @@ public final class Investigation {
         public String stopCode;
     }
 }
+
