@@ -143,7 +143,18 @@ public class TaskService implements AutoCloseable {
                 try {
                     runner.run(task, planner(task.input), repository::save, flag::get);
                 } finally {
-                    cancellations.remove(task.id);
+                    synchronized (TaskService.this) {
+                        try {
+                            // Cancel can arrive after ASK_USER was saved but before this worker exits.
+                            // Serialize final ownership release with cancel/resume so that flag is not lost.
+                            if (flag.get()) {
+                                Task latest = repository.get(task.id);
+                                if (!latest.terminal()) runner.unresolved(latest, Status.CANCELLED, "USER_CANCELLED", repository::save);
+                            }
+                        } finally {
+                            cancellations.remove(task.id);
+                        }
+                    }
                 }
             });
         } catch (RejectedExecutionException e) {
