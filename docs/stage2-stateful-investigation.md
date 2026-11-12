@@ -80,3 +80,11 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8080/api/tasks/$id/resume"
 验证代码提交：1883e117c87d0efb75e0f846638be4a649291a87。[CI 运行记录](https://github.com/Zdanquxunhuan/ayd-retailops-agent/actions/runs/43149169678)。本次补问恢复采用测试模型；完整测试包含既有 HTTP API 测试，但新增 resume HTTP 路由和真实模型补问仍需后续端到端验收。
 
 没有使用真实模型做新增补问实验，没有产生本轮模型调用费用。真实模型端到端验收、生产接入和分布式恢复尚未验证。
+
+## 后续验收补充
+
+StageTwoApiTests 新增 3 项真实 HTTP 测试：回答续跑与重复/版本冲突、取消后禁止恢复、非法回答和不存在任务。修复补问保存后 Worker 退出期间的取消竞态；关闭服务不再等同用户取消，调查线程被中断时保留为 PAUSED。
+
+代码提交 8d461c22338fd6713f30115a71bc6c6f5406eb78 的 push 和 PR 两次 CI 均通过。完整测试为 74 项，原有“resume HTTP 路由待验收”说明已由本节更新。[最新 CI](https://github.com/Zdanquxunhuan/ayd-retailops-agent/actions/runs/43179970318)。
+
+真实模型验收尚未执行：开发环境没有配置 DASHSCOPE_API_KEY 或 OMNIOPS_MODEL_API_KEY。自动化通过不代表真实模型补问质量通过。此项保留为待办，不阻塞独立的 Stage 3A 工具层开发。
