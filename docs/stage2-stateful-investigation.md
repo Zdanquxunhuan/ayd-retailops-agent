@@ -75,6 +75,8 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8080/api/tasks/$id/resume"
 3. 过期基础事实重新查询，旧证据不删除。
 4. 恢复不能重置决策预算。
 
-新增 StageTwoTests 覆盖文件快照重启、回答续跑、版本冲突/重复恢复、运行中任务转暂停及等待过期。完整 Maven 测试因当前环境缺少 Spring Boot 父 POM 且依赖网络不可用，未能执行。隔离探针不覆盖 Jackson 文件序列化或 HTTP 集成，不应等同于完整测试通过。GitHub Actions 配置使用 JDK 17 执行完整测试；结果以对应运行记录为准。
+新增 StageTwoTests 覆盖文件快照重启、回答续跑、版本冲突/重复恢复、运行中任务转暂停及等待过期。本地 Maven 因父 POM 缺失和网络限制未能执行；随后已通过 GitHub Actions 在 JDK 17 上执行完整 Maven 测试：**71 项通过，0 失败、0 错误、0 跳过**，其中 StageTwoTests 3 项通过。
+
+验证代码提交：1883e117c87d0efb75e0f846638be4a649291a87。[CI 运行记录](https://github.com/Zdanquxunhuan/ayd-retailops-agent/actions/runs/43149169678)。本次补问恢复采用测试模型；完整测试包含既有 HTTP API 测试，但新增 resume HTTP 路由和真实模型补问仍需后续端到端验收。
 
 没有使用真实模型做新增补问实验，没有产生本轮模型调用费用。真实模型端到端验收、生产接入和分布式恢复尚未验证。
