@@ -34,7 +34,12 @@ public class ReportPolicy {
         if (is(all, LOCAL, ResultStatus.SUCCESS, "FOUND")) return Outcome.REPUSH_RECOMMENDED;
         if (!is(all, LOCAL, ResultStatus.NOT_FOUND, "ABSENT")) return Outcome.UNRESOLVED;
         if (!sameSourceMode(all, LOCAL, PLATFORM)) return Outcome.UNRESOLVED;
-        if (is(all, PLATFORM, ResultStatus.SUCCESS, "FOUND")) return Outcome.RESTORE_RECOMMENDED;
+        if (is(all, PLATFORM, ResultStatus.SUCCESS, "FOUND")) {
+            var platform = latest(all, PLATFORM);
+            if (Boolean.TRUE.equals(platform.result().data().get("payloadValidated"))
+                    && Boolean.TRUE.equals(platform.result().data().get("targetMatched")))
+                return Outcome.RESTORE_RECOMMENDED;
+        }
         if (is(all, PLATFORM, ResultStatus.SUCCESS, "OUTSIDE_WINDOW")) return Outcome.OUTSIDE_SEARCH_WINDOW;
         return Outcome.UNRESOLVED;
     }
@@ -64,8 +69,8 @@ public class ReportPolicy {
         String summary = switch (d.outcome()) {
             case ALREADY_SYNCED -> "POS 接口流水已存在，无需重复补推；POS 后续业务消费状态尚未确认。";
             case REPUSH_RECOMMENDED -> "本地订单存在且 POS 接口流水未查到；复核订单完整性及业务条件后可提交补推提议，本任务未执行写操作。";
-            case RESTORE_RECOMMENDED -> "本地及 POS 明确缺单，平台返回匹配订单，可提交恢复提议；仍需真实接口完整性校验。";
-            case OUTSIDE_SEARCH_WINDOW -> "本地及 POS 缺单，平台查询窗口检查不满足，需人工处理。";
+            case RESTORE_RECOMMENDED -> "本地及 POS 明确缺单，平台返回的匹配订单通过当前适配契约校验，可评估恢复提议；模拟契约不等于真实业务载荷校验，未执行恢复。";
+            case OUTSIDE_SEARCH_WINDOW -> "本地及 POS 缺单，平台查询窗口检查不满足，请让门店人工补推；本任务未执行恢复或补推。";
             case UNRESOLVED -> "当前证据不足以形成可靠处理结论，需要继续调查或人工处理。";
         };
         boolean simulatedBusiness=List.of(LOCAL,POS,PLATFORM).stream().map(t -> latest(all,t))

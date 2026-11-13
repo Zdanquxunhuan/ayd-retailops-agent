@@ -64,9 +64,13 @@ public class InvestigationDemoRunner implements ApplicationRunner {
         Files.writeString(dir.resolve("report.md"), render(task));
         Files.writeString(dir.resolve("manifest.json"), json.writerWithDefaultPrettyPrinter().writeValueAsString(Map.of(
                 "promptSha256", hash("/prompts/" + task.promptVersion + ".txt"),
-                "datasetSha256", hash("/evaluation/investigation-cases-v1.json"),
+                "datasetSha256", Map.of(
+                        "order-cases-v1", hash("/evaluation/order-cases-v1.json"),
+                        "investigation-cases-v1", hash("/evaluation/investigation-cases-v1.json"),
+                        "meituan-investigation-cases-v1", hash("/evaluation/meituan-investigation-cases-v1.json"),
+                        "meituan-order-responses-v1", hash("/evaluation/meituan-order-responses-v1.json")),
                 "requestsUsed", planner instanceof JsonModelPlanner model ? model.requestsUsed() : 0,
-                "dataSource", "STUB", "purpose", "FUNCTIONAL_DEMONSTRATION_NOT_BENCHMARK")));
+                "dataSource", task.report.dataSource(), "purpose", "FUNCTIONAL_DEMONSTRATION_NOT_BENCHMARK")));
         System.out.println("Investigation report: " + dir.resolve("report.md").toAbsolutePath());
         System.out.println("Stop: " + task.investigation.stopCode + "; model decisions: " + task.decisions + "; tools: " + task.toolCalls);
         context.close();
@@ -78,9 +82,9 @@ public class InvestigationDemoRunner implements ApplicationRunner {
                 .append("你问：").append(cell(task.input.userGoal())).append("\n\n")
                 .append("当前查到：").append(task.report.summary()).append("\n\n")
                 .append("原因调查：").append("INVESTIGATION_READY".equals(task.investigation.stopCode) ? "已生成供审阅的调查解释，仍未确认历史根因。" : "尚未完成可靠的原因判断；以下状态事实仍保留。")
-                .append("\n\n系统实际没有执行补推、恢复或其他业务修改。这里使用模拟订单，不能据此处理真实订单。\n\n")
+                .append("\n\n系统实际没有执行补推、恢复或其他业务修改。各条证据需按 simulated/source 区分来源；模拟观察不能用于处理真实订单。\n\n")
                 .append("接下来：历史原因需要核对推送记录、回执和业务日志；如果调查被程序拦截，应先修复调查流程再重跑。\n\n## 技术追踪记录\n\n");
-        md.append("业务数据：STUB / SIMULATION。模型：").append(task.provider).append(" / ").append(task.modelVersion)
+        md.append("业务数据：").append(task.report.dataSource()).append("。模型：").append(task.provider).append(" / ").append(task.modelVersion)
                 .append("。停止原因：").append(task.investigation.stopCode).append("。\n\n")
                 .append("当前业务结论（Java）：").append(task.report.outcome()).append("。 ").append(task.report.summary()).append("\n\n")
                 .append("历史根因：UNCONFIRMED。未执行任何修复。模型解释只供审阅，不等于已验证的因果事实。\n\n")

@@ -1,0 +1,692 @@
+[
+  {
+    "fixtureId": "synced",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "repush",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "restore",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "outside-window",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-07T04:00:00Z",
+        "candidates": [],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "pos-timeout",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "platform-timeout",
+    "responses": [
+      {
+        "status": "TIMEOUT",
+        "complete": false,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [],
+        "errorCode": "UPSTREAM_TIMEOUT"
+      }
+    ]
+  },
+  {
+    "fixtureId": "partial-pos",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "platform-empty",
+    "responses": [
+      {
+        "status": "NOT_FOUND",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "contradiction",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "injection",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "investigation-reversal",
+    "responses": [
+      {
+        "status": "UNKNOWN",
+        "complete": false,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "investigation-no-history",
+    "responses": [
+      {
+        "status": "UNKNOWN",
+        "complete": false,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "investigation-injection",
+    "responses": [
+      {
+        "status": "UNKNOWN",
+        "complete": false,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-complete",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-db-failure",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-late-receipt",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-wrong-order",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "FOREIGN-ORDER",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-wrong-store",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "B002",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-incomplete",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": []
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-multiple",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          },
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-partial",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": false,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-empty",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-outside-window",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-08T03:59:59Z",
+        "candidates": [],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-boundary",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-08T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-08T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-unknown-time",
+    "responses": [
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": null,
+        "candidates": [],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-timeout",
+    "responses": [
+      {
+        "status": "TIMEOUT",
+        "complete": false,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-rate-limit",
+    "responses": [
+      {
+        "status": "ERROR",
+        "complete": false,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [],
+        "errorCode": "RATE_LIMITED"
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-rejected",
+    "responses": [
+      {
+        "status": "ERROR",
+        "complete": false,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [],
+        "errorCode": null
+      }
+    ]
+  },
+  {
+    "fixtureId": "meituan-timeout-recovery",
+    "responses": [
+      {
+        "status": "TIMEOUT",
+        "complete": false,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [],
+        "errorCode": null
+      },
+      {
+        "status": "SUCCESS",
+        "complete": true,
+        "scopeStoreId": "A001",
+        "scopeOrderId": "O100",
+        "evaluatedAt": "2026-11-13T04:00:00Z",
+        "requestedOrderTime": "2026-11-12T04:00:00Z",
+        "candidates": [
+          {
+            "storeId": "A001",
+            "orderId": "O100",
+            "createdAt": "2026-11-12T04:00:00Z",
+            "status": "PAID",
+            "items": [
+              {
+                "skuId": "SKU-DEMO",
+                "quantity": 1,
+                "unitPrice": 12.5
+              }
+            ]
+          }
+        ],
+        "errorCode": null
+      }
+    ]
+  }
+]

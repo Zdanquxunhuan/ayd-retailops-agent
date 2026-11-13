@@ -1,0 +1,857 @@
+[
+  {
+    "id": "meituan-complete",
+    "description": "模拟美团订单场景：complete",
+    "expected": "RESTORE_RECOMMENDED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-db-failure",
+    "description": "模拟美团订单场景：db-failure",
+    "expected": "RESTORE_RECOMMENDED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": [
+              {
+                "eventTime": "2026-11-12T04:00:00Z",
+                "correlation": "ORDER_ID",
+                "eventComplete": true,
+                "diagnostics": "order_id=O100 received; saveData failed: SQLTransientConnectionException: connection unavailable"
+              }
+            ]
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-late-receipt",
+    "description": "模拟美团订单场景：late-receipt",
+    "expected": "ALREADY_SYNCED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        },
+        {
+          "status": "SUCCESS",
+          "outcome": "FOUND",
+          "complete": true,
+          "data": {
+            "orderId": "O100"
+          },
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": [
+              {
+                "eventTime": "2026-11-12T04:00:00Z",
+                "correlation": "ORDER_ID",
+                "eventComplete": true,
+                "diagnostics": "order_id=O100 received; POS_RECEIPT received after first query"
+              }
+            ]
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-wrong-order",
+    "description": "模拟美团订单场景：wrong-order",
+    "expected": "UNRESOLVED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-wrong-store",
+    "description": "模拟美团订单场景：wrong-store",
+    "expected": "UNRESOLVED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-incomplete",
+    "description": "模拟美团订单场景：incomplete",
+    "expected": "UNRESOLVED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-multiple",
+    "description": "模拟美团订单场景：multiple",
+    "expected": "UNRESOLVED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-partial",
+    "description": "模拟美团订单场景：partial",
+    "expected": "UNRESOLVED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-empty",
+    "description": "模拟美团订单场景：empty",
+    "expected": "UNRESOLVED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-outside-window",
+    "description": "模拟美团订单场景：outside-window",
+    "expected": "OUTSIDE_SEARCH_WINDOW",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-boundary",
+    "description": "模拟美团订单场景：boundary",
+    "expected": "RESTORE_RECOMMENDED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-unknown-time",
+    "description": "模拟美团订单场景：unknown-time",
+    "expected": "UNRESOLVED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-timeout",
+    "description": "模拟美团订单场景：timeout",
+    "expected": "UNRESOLVED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-rate-limit",
+    "description": "模拟美团订单场景：rate-limit",
+    "expected": "UNRESOLVED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-rejected",
+    "description": "模拟美团订单场景：rejected",
+    "expected": "UNRESOLVED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "meituan-timeout-recovery",
+    "description": "模拟美团订单场景：timeout-recovery",
+    "expected": "RESTORE_RECOMMENDED",
+    "requiredObservations": {
+      "pos.order.query": 1,
+      "order.local.query": 1,
+      "meituan.order.search": 1
+    },
+    "responses": {
+      "pos.order.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "order.local.query": [
+        {
+          "status": "NOT_FOUND",
+          "outcome": "ABSENT",
+          "complete": true,
+          "data": {},
+          "errorCode": null
+        }
+      ],
+      "logs.search": [
+        {
+          "status": "SUCCESS",
+          "outcome": "OBSERVED",
+          "complete": true,
+          "data": {
+            "lines": []
+          },
+          "errorCode": null
+        }
+      ],
+      "order.push.history": [
+        {
+          "status": "UNKNOWN",
+          "outcome": "INDETERMINATE",
+          "complete": false,
+          "data": {
+            "records": []
+          },
+          "errorCode": null
+        }
+      ]
+    }
+  }
+]
