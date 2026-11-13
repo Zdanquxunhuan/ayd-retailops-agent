@@ -14,7 +14,9 @@ $env:Path="$env:JAVA_HOME\bin;$env:Path"
 
 沿用 POST /api/tasks，strategy=investigation，storeId=A001，orderId 为副本内单号，fixtureId=restore 等。模型 provider 默认 stub；真实大模型需另行配置原有 remote/DeepSeek 配置。日志执行只有在规划器调用 logs.search 时发生，启动不会自动查询日志，也不保证每个任务都调用日志。模型决定下一步工具，Java 控制范围、预算和来源。
 
-## 结果与边界
+## 第一版结果与边界
+
+以下是 v1 的边界记录；v2 的现行行为见 [日志事件取证](stage3b-log-events.md)。
 
 - 美团、本地订单、POS、推送历史仍模拟，Evidence.simulated=true；日志副本为 false，但不代表当前线上状态。
 - 日志结果 LOG_SNAPSHOT 包含文件、行号、同一行的异常特征、扫描范围和 scanTruncated。

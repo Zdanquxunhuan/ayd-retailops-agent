@@ -96,9 +96,19 @@ public class InvestigationPolicy {
 
     private void usable(List<String> refs, Task task) {
         require(refs.stream().allMatch(id -> task.evidence.stream().anyMatch(e -> e.id().equals(id)
-                && e.validUntil().isAfter(clock.instant()) && e.result().complete()
-                && Set.of(ResultStatus.SUCCESS, ResultStatus.NOT_FOUND).contains(e.result().status())
+                && e.validUntil().isAfter(clock.instant()) && (usableSnapshot(e) || (e.result().complete()
+                && Set.of(ResultStatus.SUCCESS, ResultStatus.NOT_FOUND).contains(e.result().status())))
                 && hasHistoricalObservations(e))), "UNUSABLE_HYPOTHESIS_EVIDENCE");
+    }
+    // A partial search can retain intact positive observations; it cannot establish absence.
+    private boolean usableSnapshot(Evidence e) {
+        if (!ReadOnlyGateway.LOGS.equals(e.tool()) || e.simulated()
+                || !"LOG_SNAPSHOT".equals(e.result().outcome())
+                || !Set.of(ResultStatus.SUCCESS, ResultStatus.PARTIAL).contains(e.result().status())) return false;
+        Object value=e.result().data().get("lines");
+        return value instanceof List<?> lines && !lines.isEmpty() && lines.stream().allMatch(item ->
+            item instanceof Map<?,?> row && Boolean.TRUE.equals(row.get("eventComplete"))
+                && Set.of("ORDER_ID", "TRACE_ID").contains(row.get("correlation")));
     }
     private boolean hasHistoricalObservations(Evidence evidence) {
         // A successful search with no retained records is not evidence that an event never occurred.
