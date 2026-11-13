@@ -62,7 +62,8 @@ public class ReportPolicy {
             case UNRESOLVED -> "当前证据不足以形成可靠处理结论，需要继续调查或人工处理。";
         };
         return new Report(d.outcome(), summary, List.copyOf(ids), "UNCONFIRMED",
-                List.of("业务数据全部为 Stub，不能用于处理真实订单。", "当前状态不证明历史根因；未执行任何修复。"),
-                "OBSERVE_ONLY", "STUB");
+                List.of("订单、POS 和美团查询为模拟数据；日志可能来自本地历史副本，不能用于处理真实订单。", "当前状态不证明历史根因；未执行任何修复。"),
+                "OBSERVE_ONLY", all.stream().anyMatch(e -> !e.simulated()) ? "MIXED_SNAPSHOT_AND_STUB" : "STUB");
     }
 }
+
