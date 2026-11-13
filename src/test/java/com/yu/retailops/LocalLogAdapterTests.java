@@ -20,7 +20,7 @@ class LocalLogAdapterTests {
             .execute(new Input("query","A001",id,"restore","investigation"),List.of());
     }
     @Test void exactMatchAndPayloadExclusion() throws Exception {
-        write("order_id=1234 java.lang.NullPointerException\norder_id=123 com.example.NewDatabaseException phone=13812345678 token=secret");
+        write("2026-11-11 10:00:00 order_id=1234\njava.lang.NullPointerException\n2026-11-11 10:00:01 order_id=123\ncom.example.NewDatabaseException: phone=13812345678 token=secret");
         var r=query("123");
         assertTrue(r.toString().contains("NewDatabaseException"));
         assertFalse(r.toString().contains("NullPointerException"));
@@ -29,16 +29,16 @@ class LocalLogAdapterTests {
     }
     @Test void emptySnapshotDoesNotMeanMissingOrder() throws Exception {
         var r=query("123");assertFalse(r.complete());assertNotEquals(ResultStatus.NOT_FOUND,r.status());
-        assertEquals(List.of(),r.data().get("matches"));
+        assertEquals(List.of(),r.data().get("lines"));
     }
     @Test void invalidInputAndOversizedLines() throws Exception {
         assertEquals("INVALID_ORDER_ID",query("../x;rm").errorCode());
         write("x".repeat(40000));assertEquals(ResultStatus.PARTIAL,query("123").status());
     }
     @Test void hitLimitIsExplicit() throws Exception {
-        write("order_id=123 SQLException\n".repeat(30));
+        write("2026-11-11 10:00:00 order_id=123 SQLException\n".repeat(30));
         var r=query("123");assertEquals(true,r.data().get("scanTruncated"));
-        assertEquals(20,((List<?>)r.data().get("matches")).size());
+        assertEquals(10,((List<?>)r.data().get("lines")).size());
     }
     @Test void badGzipIsToolError() throws Exception {
         Files.writeString(root.resolve("b-push-center-server.log.2026-11-11.2.gz"),"not gzip");
