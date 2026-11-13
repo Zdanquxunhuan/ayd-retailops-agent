@@ -31,8 +31,16 @@ public class StageOneConfiguration {
     }
 
     @Bean
-    ReadOnlyGateway gateway(FixtureCatalog catalog, @Value("${omniops.allowed-store}") String store, Clock clock) {
-        return new ReadOnlyGateway(catalog, store, clock);
+    ReadOnlyGateway gateway(FixtureCatalog catalog, @Value("${omniops.allowed-store}") String store, Clock clock, Environment env) throws Exception {
+        var definitions = new ArrayList<>(new FixtureToolAdapter(catalog).registry().all());
+        String mode = env.getProperty("omniops.logs.mode", "fixture");
+        if ("local".equals(mode)) {
+            var logs = new LocalLogAdapter(Path.of(env.getRequiredProperty("omniops.logs.directory")),
+                    env.getRequiredProperty("omniops.logs.date"));
+            definitions.removeIf(d -> d.name().equals(ReadOnlyGateway.LOGS));
+            definitions.add(logs.definition());
+        } else if (!"fixture".equals(mode)) throw new IllegalArgumentException("Unknown log mode");
+        return new ReadOnlyGateway(new ToolRegistry(definitions), store, clock);
     }
 
     @Bean
@@ -78,3 +86,4 @@ public class StageOneConfiguration {
         return new TaskService(repository, runner, agent, workflow, fixtures, gateway, clock);
     }
 }
+
