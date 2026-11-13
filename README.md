@@ -1,14 +1,30 @@
 # OmniOps Agent
 
-Stage 2 新增有状态补问与单机恢复，使用、设计及验证边界见 [Stage 2 说明](docs/stage2-stateful-investigation.md)。以下 Stage 1E 记录保留为此前阶段结果。
+**开发主线：先完成美团订单调查与受控补推闭环，再开发库存。** 后续阶段、验收标准及下一项任务统一见 [开发路线与 Agent 能力设计](docs/design/04-agent-development-roadmap-v0.3.md)（2026-11-13 更新，沿用原文件路径）。
 
-当前进展：[Stage 1E 增量契约](docs/stage1e-delta-contract.md)，Prompt v8，68 项测试通过。本轮 50 次额度已使用 28 次。真实模型的未知处理与日志注入样本有改善，反证调查仍未完整通过。先看 [正常使用的例子](docs/stage1e-user-examples.md)，再看 [实测结果](docs/stage1e-live-verification.md)。
+## 当前进度与文档入口
+
+| 范围 | 已实现与待验收 |
+| --- | --- |
+| [Stage 2：State / Context / Checkpoint](docs/stage2-stateful-investigation.md) | 单机补问、暂停恢复、累计预算保留；新增真实模型补问质量仍待验收 |
+| [Stage 3A：工具执行层](docs/stage3a-tool-execution.md) | 工具注册、对象范围校验、有界执行和错误语义 |
+| [Stage 3B：日志事件](docs/stage3b-log-events.md) | 读取本地日志副本、关联事件与脱敏；[副本配置](docs/stage3b-log-snapshots.md) |
+| [Stage 3B：JDBC 只读适配](docs/stage3b-jdbc-readonly.md) | 本地订单与 POS 适配代码及自动化测试已完成，真实库联调待完成 |
+| 下一步：Stage 3C（待开发） | 完善美团订单模拟适配与订单端到端验收；之后依次完成订单 RAG/Memory、调查质量评估、审批恢复/补推、演示交付，再扩展库存 |
+
+美团继续模拟，尚未接入 SDK/AppKey；恢复、补推与库存同步尚未实现。JDBC 默认关闭，启用时需本地配置只读账号与门店映射。真实与模拟结果分别标记，模拟结果不能支撑真实修复执行。当前没有生产身份认证，也未完成最新 JDBC/日志组合的真实模型端到端验收。
+
+[原分阶段设计](docs/design/02-phased-design-v0.2.md) 保留历史编号与协议细节；开发顺序以主路线为准。以下保留 Stage 1 的演示用法与历史评估记录，默认配置使用模拟业务数据；Stage 2 恢复及 Stage 3B 实际只读接入以对应文档为准。
+
+## Stage 1 历史实现与验证
+
+Stage 1E 记录：[增量契约](docs/stage1e-delta-contract.md)，Prompt v8，68 项测试通过。当轮 50 次额度使用 28 次。真实模型的未知处理与日志注入样本有改善，反证调查仍未完整通过。先看 [正常使用的例子](docs/stage1e-user-examples.md)，再看 [实测结果](docs/stage1e-live-verification.md)。这些历史记录不代表最新代码与 Prompt 的验收结果，也不构成新增调用授权。
 
 此前阶段：[Stage 1D 假设修正](docs/stage1d-hypothesis-review.md) 与其 [实测记录](docs/stage1d-live-verification.md)。当前实现继续保留时间范围、逐项复核和一次受预算约束的契约纠正。
 
 基于 V0.2 实现的 Stage 1 订单只读诊断原型。Java 17、Spring Boot 4.1.2。支持任务提交、补充对象、动态工具选择、证据落盘、受控结论、取消和 Workflow 对照评估。
 
-**当前业务工具全部为 Stub。默认决策器也是规则 Stub，不是大模型。** 百炼 qwen-flash 已跑通状态诊断与 Stage 1C 多轮调查调用链；实测也暴露了模型假设与最新事实不一致的问题，原因解释仍需审阅。没有接入生产订单、POS 或美团接口，也没有任何写工具。最新结果见 `docs/stage1c-live-verification.md`；此前记录见 `docs/stage1b-qwen-verification.md` 和 `docs/stage1b-live-probe.md`。
+**以下 Stage 1 默认演示使用 Stub 业务数据；默认 agent 决策器也是规则 Stub，不是大模型。** 百炼 qwen-flash 已跑通状态诊断与 Stage 1C 多轮调查调用链；实测也暴露了模型假设与最新事实不一致的问题，原因解释仍需审阅。该阶段未接入生产订单、POS 或美团接口，也没有任何写工具。该阶段结果见 `docs/stage1c-live-verification.md`；此前记录见 `docs/stage1b-qwen-verification.md` 和 `docs/stage1b-live-probe.md`。
 
 新增 **Stage 1C：大模型异常调查闭环**。使用 `strategy=investigation`，Java 采集基础状态，大模型提出假设、选择只读查询、读取日志、根据反证更新假设。每轮提议、校验结果、假设版本和实际观察分别保留。此路径不会使用规则 Stub 冒充调查模型。运行与当前验证范围见 [Stage 1C 使用说明](docs/stage1c-investigation.md)。
 
@@ -44,7 +60,7 @@ Invoke-RestMethod "http://127.0.0.1:8080/api/tasks/$($task.id)/report"
 
 POST 返回 202，报告生成前 GET report 返回 204。`contradiction` 的规则 Stub 轨迹为 POS→本地→日志→重新查询 POS；根据日志回执线索重新验证后，结论变为 ALREADY_SYNCED。这个分支是预编程的演示，不能当作模型理解未知日志的证明。
 
-`GET /api/fixtures` 查看可选场景；`strategy=workflow` 使用固定顺序对照。fixtureId 仅用于本地模拟，不是将来的生产业务参数。更换 orderId 只改变模拟查询上下文，不会访问真实订单；样例请使用 O100。
+`GET /api/fixtures` 查看可选场景；`strategy=workflow` 使用固定顺序对照。fixtureId 仅用于本地模拟，不是将来的生产业务参数。在默认模拟配置下，更换 orderId 只改变模拟查询上下文，不会访问真实订单；样例请使用 O100。启用 JDBC 后应按 Stage 3B 文档传入真实规范订单号，不使用此样例。
 
 缺少 storeId 或 orderId 时进入 CLARIFYING。通过 `POST /api/tasks/{id}/clarifications` 提交 `storeId、orderId、expectedVersion`，其中版本从 GET task 获取。版本冲突返回 409。`POST /api/tasks/{id}/cancel` 请求取消；若模型调用中，最多等待该轮有界调用退出，查询任务确认最终状态。
 
@@ -105,17 +121,17 @@ DeepSeek 官方接口于 2026-11-11 返回 `deepseek-flash`、`deepseek-v4-pro`�
 
 百炼调用关闭 thinking，使用相同的严格 JSON 决策校验、证据门槛及进程请求总上限。模型变更后需重新评估，不承诺便宜模型能修复之前的调查或响应格式问题。[官方兼容接口](https://help.aliyun.com/en/model-studio/qwen-api-via-openai-chat-completions)
 
-## 工程边界与限制
+## Stage 1 默认演示边界与后续变化
 
 - 网关注册五个查询工具，新增 `order.push.history`（模拟推送历史）；每次调用检查门店范围、订单目标和白名单。默认范围为 A001。
 - 结果区分 FOUND、ABSENT、TIMEOUT、PARTIAL 等；查询失败无法支持缺单结论，最新反证和过期证据不能被忽略。
 - 默认上限为 8 次决策、12 次工具调用、120 秒活动时间。相同工具最多三次，相同结果连续出现后停止无进展循环。
-- JSON 原子快照保存任务、计划、证据和事件，文件锁限制一个进程使用同一目录。重启将未结束调查安全转人工，保留证据；不是自动断点续跑。
+- JSON 原子快照保存任务、计划、证据和事件，文件锁限制一个进程使用同一目录。旧 agent/workflow 路径重启后转人工；Stage 2 的 investigation 路径支持 WAITING_USER/PAUSED 后显式恢复，详见对应文档。
 - 这是本地单用户原型：没有生产身份认证、跨用户隔离、分布式 Worker、关系库迁移和请求幂等。调查路径已支持假设版本及引用校验，尚无根因自动确认器和人工复核状态机。绑定非回环地址及 production/integration profile 会拒绝启动。
 - 只报告当前状态和处理建议，历史根因始终标为未确认。真实接口返回的订单完整性、多键唯一性及五天边界尚未接入，本版本的窗口外场景只是接口检查结果 Stub。
-- 不记录 API 密钥和原始模型错误响应；本地任务目录仍需按实际数据敏感性保护。本版本请只使用模拟内容。
+- 不记录 API 密钥和原始模型错误响应；本地任务目录仍需按实际数据敏感性保护。默认演示使用模拟内容；实际日志与 JDBC 数据联调需按 Stage 3B 文档限定字段与范围，向外部模型发送前复核脱敏结果。
 
-文件数据库、规则 Stub 与本地身份是假设明确的阶段实现，不能宣称已达到完整生产 Stage 1 准入标准。下一步用真实只读适配器与真实模型跑相同契约测试，再替换元数据存储、接入身份源并补齐生产门禁。
+文件数据库、规则 Stub 与本地身份是假设明确的阶段实现，不能宣称已达到完整生产准入标准。真实只读联调、身份源和生产门禁仍有缺口；下一项开发按主路线推进 Stage 3C 美团订单模拟适配与端到端验收。
 
 ## 代码导航
 
@@ -127,5 +143,5 @@ DeepSeek 官方接口于 2026-11-11 返回 `deepseek-flash`、`deepseek-v4-pro`�
 - `application/TaskService.java`、`api/TaskController.java`：异步任务与 API。
 - `persistence/FileTaskRepository.java`：单机原子快照。
 - `evaluation/EvaluationRunner.java`：同条件对照、逐例评分与轨迹导出。
-- `docs/design/`：V0.2 架构评审与阶段设计；原设计描述目标，本 README 描述已实现范围。
+- `docs/design/04-agent-development-roadmap-v0.3.md`：当前执行路线、进度、订单验收标准与库存延后范围；其他设计文档保留历史协议供参考。
 
