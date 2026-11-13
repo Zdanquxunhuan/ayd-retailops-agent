@@ -96,6 +96,8 @@ public class InvestigationPolicy {
 
     private void usable(List<String> refs, Task task) {
         require(refs.stream().allMatch(id -> task.evidence.stream().anyMatch(e -> e.id().equals(id)
+                && !(e.simulated() && task.evidence.stream().anyMatch(observation -> !observation.simulated()
+                    && Set.of(ReadOnlyGateway.LOCAL,ReadOnlyGateway.POS).contains(observation.tool())))
                 && e.validUntil().isAfter(clock.instant()) && (usableSnapshot(e) || (e.result().complete()
                 && Set.of(ResultStatus.SUCCESS, ResultStatus.NOT_FOUND).contains(e.result().status())))
                 && hasHistoricalObservations(e))), "UNUSABLE_HYPOTHESIS_EVIDENCE");

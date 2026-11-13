@@ -39,7 +39,7 @@ public class InvestigationRunner {
 
     public void run(Task task, Planner planner, Consumer<Task> checkpoint, BooleanSupplier cancelled) {
         long start = System.nanoTime(), previousMillis = task.activeMillis;
-        task.promptVersion = "order-investigation-v9";
+        task.promptVersion = "order-investigation-v10";
         task.schemaVersion = "investigation-v2";
         if (task.investigation == null) {
             task.investigation = new Trace();
@@ -189,6 +189,8 @@ public class InvestigationRunner {
         task.toolCalls++;
         events.event(task, Status.EXECUTING_TOOL, "TOOL_STARTED", tool + ": " + reason, checkpoint);
         task.evidence.add(gateway.invoke(task.input, Decision.call(tool, task.input, reason), task.evidence));
+        task.investigation.executionEnvironment = task.evidence.stream().anyMatch(e -> !e.simulated())
+                ? Environment.MIXED_READ_ONLY : Environment.SIMULATION;
         task.agentState.pendingQuery = null;
         task.agentState.nextStep = "PLAN";
         events.event(task, Status.REASONING, "EVIDENCE_RECORDED", tool, checkpoint);

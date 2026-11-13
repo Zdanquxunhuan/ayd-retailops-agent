@@ -64,7 +64,7 @@ public class TaskService implements AutoCloseable {
         if (missing(input))
             runner.event(task, Status.CLARIFYING, "MISSING_ENTITY", "请补充 storeId 与 orderId。", repository::save);
         else {
-            runner.event(task, Status.CREATED, "TASK_CREATED", "任务已接收；数据源 STUB，模式 OBSERVE_ONLY。", repository::save);
+            runner.event(task, Status.CREATED, "TASK_CREATED", "任务已接收；模式 OBSERVE_ONLY，数据来源以各条证据标记为准。", repository::save);
             submit(task);
         }
         return repository.get(task.id);

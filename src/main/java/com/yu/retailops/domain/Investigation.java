@@ -14,7 +14,7 @@ public final class Investigation {
 
     public enum Intent {CHECK_STATUS, DIAGNOSE_CAUSE}
 
-    public enum Environment {SIMULATION}
+    public enum Environment {SIMULATION, MIXED_READ_ONLY}
 
     public enum Action {QUERY, ASK_USER, DIAGNOSIS_READY, NEEDS_HUMAN}
 

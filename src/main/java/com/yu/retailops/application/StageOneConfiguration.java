@@ -24,14 +24,19 @@ public class StageOneConfiguration {
     FixtureCatalog fixtureCatalog(JsonMapper json, Environment env) throws Exception {
         Set<String> profiles = new HashSet<>(Arrays.asList(env.getActiveProfiles()));
         if (!profiles.isEmpty() && !Set.of("stub", "test").containsAll(profiles))
-            throw new IllegalStateException("Stage 1 currently provides only STUB business adapters; production/integration profiles are blocked");
+            throw new IllegalStateException("Only localhost demonstration profiles are supported; production authentication is not implemented");
         if (!"127.0.0.1".equals(env.getProperty("server.address")))
             throw new IllegalStateException("Local demonstration must bind to 127.0.0.1; production authentication is not implemented");
         return new FixtureCatalog(json);
     }
 
+    @Bean(destroyMethod = "close")
+    JdbcToolResources jdbcToolResources(Environment env, @Value("${omniops.allowed-store}") String store) {
+        return new JdbcToolResources(env,store);
+    }
+
     @Bean
-    ReadOnlyGateway gateway(FixtureCatalog catalog, @Value("${omniops.allowed-store}") String store, Clock clock, Environment env) throws Exception {
+    ReadOnlyGateway gateway(FixtureCatalog catalog, @Value("${omniops.allowed-store}") String store, Clock clock, Environment env, JdbcToolResources jdbc) throws Exception {
         var definitions = new ArrayList<>(new FixtureToolAdapter(catalog).registry().all());
         String mode = env.getProperty("omniops.logs.mode", "fixture");
         if ("local".equals(mode)) {
@@ -40,6 +45,10 @@ public class StageOneConfiguration {
             definitions.removeIf(d -> d.name().equals(ReadOnlyGateway.LOGS));
             definitions.add(logs.definition());
         } else if (!"fixture".equals(mode)) throw new IllegalArgumentException("Unknown log mode");
+        for (var definition : jdbc.definitions()) {
+            definitions.removeIf(d -> d.name().equals(definition.name()));
+            definitions.add(definition);
+        }
         return new ReadOnlyGateway(new ToolRegistry(definitions), store, clock);
     }
 

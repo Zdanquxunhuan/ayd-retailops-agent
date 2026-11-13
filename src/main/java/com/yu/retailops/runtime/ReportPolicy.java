@@ -30,11 +30,18 @@ public class ReportPolicy {
     public Outcome supported(List<Evidence> all) {
         if (is(all, POS, ResultStatus.SUCCESS, "FOUND")) return Outcome.ALREADY_SYNCED;
         if (!is(all, POS, ResultStatus.NOT_FOUND, "ABSENT")) return Outcome.UNRESOLVED;
+        if (!sameSourceMode(all, POS, LOCAL)) return Outcome.UNRESOLVED;
         if (is(all, LOCAL, ResultStatus.SUCCESS, "FOUND")) return Outcome.REPUSH_RECOMMENDED;
         if (!is(all, LOCAL, ResultStatus.NOT_FOUND, "ABSENT")) return Outcome.UNRESOLVED;
+        if (!sameSourceMode(all, LOCAL, PLATFORM)) return Outcome.UNRESOLVED;
         if (is(all, PLATFORM, ResultStatus.SUCCESS, "FOUND")) return Outcome.RESTORE_RECOMMENDED;
         if (is(all, PLATFORM, ResultStatus.SUCCESS, "OUTSIDE_WINDOW")) return Outcome.OUTSIDE_SEARCH_WINDOW;
         return Outcome.UNRESOLVED;
+    }
+
+    private boolean sameSourceMode(List<Evidence> all, String first, String second) {
+        var a=latest(all,first);var b=latest(all,second);
+        return a!=null && b!=null && a.simulated()==b.simulated();
     }
 
     public Report validate(Decision d, List<Evidence> all) {
@@ -55,15 +62,20 @@ public class ReportPolicy {
             }
         }
         String summary = switch (d.outcome()) {
-            case ALREADY_SYNCED -> "POS 查询确认订单已存在，无需补推。";
-            case REPUSH_RECOMMENDED -> "本地订单存在且 POS 明确不存在，可提交补推提议；本任务未执行写操作。";
+            case ALREADY_SYNCED -> "POS 接口流水已存在，无需重复补推；POS 后续业务消费状态尚未确认。";
+            case REPUSH_RECOMMENDED -> "本地订单存在且 POS 接口流水未查到；复核订单完整性及业务条件后可提交补推提议，本任务未执行写操作。";
             case RESTORE_RECOMMENDED -> "本地及 POS 明确缺单，平台返回匹配订单，可提交恢复提议；仍需真实接口完整性校验。";
             case OUTSIDE_SEARCH_WINDOW -> "本地及 POS 缺单，平台查询窗口检查不满足，需人工处理。";
             case UNRESOLVED -> "当前证据不足以形成可靠处理结论，需要继续调查或人工处理。";
         };
+        boolean simulatedBusiness=List.of(LOCAL,POS,PLATFORM).stream().map(t -> latest(all,t))
+                .filter(Objects::nonNull).anyMatch(Evidence::simulated);
+        if (simulatedBusiness) summary="[含模拟业务观察] "+summary;
+        boolean live=all.stream().anyMatch(e -> !e.simulated());
+        boolean stub=all.stream().anyMatch(Evidence::simulated);
         return new Report(d.outcome(), summary, List.copyOf(ids), "UNCONFIRMED",
-                List.of("订单、POS 和美团查询为模拟数据；日志可能来自本地历史副本，不能用于处理真实订单。", "当前状态不证明历史根因；未执行任何修复。"),
-                "OBSERVE_ONLY", all.stream().anyMatch(e -> !e.simulated()) ? "MIXED_SNAPSHOT_AND_STUB" : "STUB");
+                List.of("来源以每条 evidence.simulated/source 为准；模拟结果不能补足真实业务证据。", "当前状态不证明历史根因；未执行任何修复。", "本地查询仅取元数据；POS FOUND 仅指接口流水存在。"),
+                "OBSERVE_ONLY", live ? (stub ? "MIXED_READ_ONLY" : "OBSERVED_READ_ONLY") : "STUB");
     }
 }
 
