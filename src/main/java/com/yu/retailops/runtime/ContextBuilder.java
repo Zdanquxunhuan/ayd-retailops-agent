@@ -16,7 +16,9 @@ public class ContextBuilder {
                 + task.investigation.hypotheses.toString().length()
                 + Objects.toString(task.agentState.feedback, "").length();
         if (characters > 60000) throw new IllegalArgumentException("CONTEXT_LIMIT_EXCEEDED");
-        return new Context(Environment.SIMULATION, task.investigation.intent, goal.toString(),
+        task.investigation.executionEnvironment=task.evidence.stream().anyMatch(e -> !e.simulated())
+                ? Environment.MIXED_READ_ONLY : Environment.SIMULATION;
+        return new Context(task.investigation.executionEnvironment, task.investigation.intent, goal.toString(),
                 task.input.storeId(), task.input.orderId(), clock.instant(), reports.supported(task.evidence),
                 List.copyOf(task.evidence), List.copyOf(task.investigation.hypotheses),
                 task.investigation.turns.stream().filter(Turn::accepted).map(Turn::proposal)
