@@ -51,11 +51,14 @@ class LocalLogAdapterTests {
         var registry=new FixtureToolAdapter(new FixtureCatalog(new tools.jackson.databind.json.JsonMapper())).registry();
         var d=registry.require(ReadOnlyGateway.PLATFORM);assertTrue(d.simulated());
         for(String fixture:List.of("restore","outside-window","platform-timeout","platform-empty")) {
-            var r=d.handler().execute(new Input("q","A001","123",fixture,"investigation"),List.of());
+            var r=d.handler().execute(new Input("q","A001","O100",fixture,"investigation"),List.of());
             assertNotNull(r.status());
             if(fixture.equals("platform-timeout"))assertEquals(ResultStatus.TIMEOUT,r.status());
             if(fixture.equals("restore"))assertEquals("FOUND",r.outcome());
             if(fixture.equals("outside-window"))assertEquals("OUTSIDE_WINDOW",r.outcome());
         }
+        var mismatched=d.handler().execute(new Input("q","A001","123","restore","investigation"),List.of());
+        assertEquals(ResultStatus.DENIED,mismatched.status());
+        assertEquals("PLATFORM_SCOPE_MISMATCH",mismatched.errorCode());
     }
 }

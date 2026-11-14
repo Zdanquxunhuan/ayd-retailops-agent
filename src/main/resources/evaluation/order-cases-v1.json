@@ -26,17 +26,6 @@
           "errorCode": null
         }
       ],
-      "meituan.order.search": [
-        {
-          "status": "SUCCESS",
-          "outcome": "FOUND",
-          "complete": true,
-          "data": {
-            "orderId": "O100"
-          },
-          "errorCode": null
-        }
-      ],
       "logs.search": [
         {
           "status": "SUCCESS",
@@ -75,17 +64,6 @@
           "outcome": "ABSENT",
           "complete": true,
           "data": {},
-          "errorCode": null
-        }
-      ],
-      "meituan.order.search": [
-        {
-          "status": "SUCCESS",
-          "outcome": "FOUND",
-          "complete": true,
-          "data": {
-            "orderId": "O100"
-          },
           "errorCode": null
         }
       ],
@@ -129,17 +107,6 @@
           "errorCode": null
         }
       ],
-      "meituan.order.search": [
-        {
-          "status": "SUCCESS",
-          "outcome": "FOUND",
-          "complete": true,
-          "data": {
-            "orderId": "O100"
-          },
-          "errorCode": null
-        }
-      ],
       "logs.search": [
         {
           "status": "SUCCESS",
@@ -176,15 +143,6 @@
         {
           "status": "NOT_FOUND",
           "outcome": "ABSENT",
-          "complete": true,
-          "data": {},
-          "errorCode": null
-        }
-      ],
-      "meituan.order.search": [
-        {
-          "status": "SUCCESS",
-          "outcome": "OUTSIDE_WINDOW",
           "complete": true,
           "data": {},
           "errorCode": null
@@ -233,17 +191,6 @@
           "errorCode": "UPSTREAM_TIMEOUT"
         }
       ],
-      "meituan.order.search": [
-        {
-          "status": "SUCCESS",
-          "outcome": "FOUND",
-          "complete": true,
-          "data": {
-            "orderId": "O100"
-          },
-          "errorCode": null
-        }
-      ],
       "logs.search": [
         {
           "status": "SUCCESS",
@@ -281,15 +228,6 @@
           "complete": true,
           "data": {},
           "errorCode": null
-        }
-      ],
-      "meituan.order.search": [
-        {
-          "status": "TIMEOUT",
-          "outcome": "INDETERMINATE",
-          "complete": false,
-          "data": {},
-          "errorCode": "UPSTREAM_TIMEOUT"
         }
       ],
       "logs.search": [
@@ -335,17 +273,6 @@
           "errorCode": null
         }
       ],
-      "meituan.order.search": [
-        {
-          "status": "SUCCESS",
-          "outcome": "FOUND",
-          "complete": true,
-          "data": {
-            "orderId": "O100"
-          },
-          "errorCode": null
-        }
-      ],
       "logs.search": [
         {
           "status": "SUCCESS",
@@ -377,15 +304,6 @@
         }
       ],
       "pos.order.query": [
-        {
-          "status": "NOT_FOUND",
-          "outcome": "ABSENT",
-          "complete": true,
-          "data": {},
-          "errorCode": null
-        }
-      ],
-      "meituan.order.search": [
         {
           "status": "NOT_FOUND",
           "outcome": "ABSENT",
@@ -446,17 +364,6 @@
           "errorCode": null
         }
       ],
-      "meituan.order.search": [
-        {
-          "status": "SUCCESS",
-          "outcome": "FOUND",
-          "complete": true,
-          "data": {
-            "orderId": "O100"
-          },
-          "errorCode": null
-        }
-      ],
       "logs.search": [
         {
           "status": "SUCCESS",
@@ -496,17 +403,6 @@
           "outcome": "ABSENT",
           "complete": true,
           "data": {},
-          "errorCode": null
-        }
-      ],
-      "meituan.order.search": [
-        {
-          "status": "SUCCESS",
-          "outcome": "FOUND",
-          "complete": true,
-          "data": {
-            "orderId": "O100"
-          },
           "errorCode": null
         }
       ],

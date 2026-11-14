@@ -11,6 +11,8 @@ public class FixtureCatalog {
                           Map<String, List<ToolResult>> responses) {}
     private final List<Fixture> fixtures;
     private final List<Fixture> investigationFixtures;
+    private final List<Fixture> meituanFixtures;
+    private final MockMeituanOrderClient.Scenarios meituan;
     public FixtureCatalog(JsonMapper json) throws IOException {
         try (var in = getClass().getResourceAsStream("/evaluation/order-cases-v1.json")) {
             if (in == null) throw new IOException("Fixture resource missing");
@@ -20,8 +22,16 @@ public class FixtureCatalog {
             if (in == null) throw new IOException("Investigation fixture resource missing");
             investigationFixtures = List.of(json.readValue(in, Fixture[].class));
         }
+        try (var in = getClass().getResourceAsStream("/evaluation/meituan-investigation-cases-v1.json")) {
+            if (in == null) throw new IOException("Meituan fixtures missing");
+            meituanFixtures = List.of(json.readValue(in, Fixture[].class));
+        }
+        meituan = new MockMeituanOrderClient.Scenarios(json);
     }
-    public List<Fixture> all() { return java.util.stream.Stream.concat(fixtures.stream(), investigationFixtures.stream()).toList(); }
+    public MeituanOrderClient meituanClient(Input input, List<Evidence> history) {
+        return meituan.forInvocation(input, history);
+    }
+    public List<Fixture> all() { return java.util.stream.Stream.of(fixtures, investigationFixtures, meituanFixtures).flatMap(List::stream).toList(); }
     public List<Fixture> evaluationCases() { return fixtures; }
     public Fixture get(String id) {
         return all().stream().filter(f -> f.id().equals(id)).findFirst()

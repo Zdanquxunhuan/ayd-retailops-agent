@@ -10,7 +10,8 @@
 | [Stage 3A：工具执行层](docs/stage3a-tool-execution.md) | 工具注册、对象范围校验、有界执行和错误语义 |
 | [Stage 3B：日志事件](docs/stage3b-log-events.md) | 读取本地日志副本、关联事件与脱敏；[副本配置](docs/stage3b-log-snapshots.md) |
 | [Stage 3B：JDBC 只读适配](docs/stage3b-jdbc-readonly.md) | 本地订单与 POS 适配代码及自动化测试已完成，真实库联调待完成 |
-| 下一步：Stage 3C（待开发） | 完善美团订单模拟适配与订单端到端验收；之后依次完成订单 RAG/Memory、调查质量评估、审批恢复/补推、演示交付，再扩展库存 |
+| [Stage 3C：美团模拟与模型调查](docs/stage3c-meituan-order-investigation.md) | 平台响应校验、模型选择美团/日志查询、补问恢复与 HTTP 回归；百炼真实效果仍待验收 |
+| 下一步：Stage 4（订单） | 订单 RAG/Memory；之后调查质量评估、审批恢复/补推、演示交付，再扩展库存 |
 
 美团继续模拟，尚未接入 SDK/AppKey；恢复、补推与库存同步尚未实现。JDBC 默认关闭，启用时需本地配置只读账号与门店映射。真实与模拟结果分别标记，模拟结果不能支撑真实修复执行。当前没有生产身份认证，也未完成最新 JDBC/日志组合的真实模型端到端验收。
 
@@ -131,7 +132,7 @@ DeepSeek 官方接口于 2026-11-11 返回 `deepseek-flash`、`deepseek-v4-pro`�
 - 只报告当前状态和处理建议，历史根因始终标为未确认。真实接口返回的订单完整性、多键唯一性及五天边界尚未接入，本版本的窗口外场景只是接口检查结果 Stub。
 - 不记录 API 密钥和原始模型错误响应；本地任务目录仍需按实际数据敏感性保护。默认演示使用模拟内容；实际日志与 JDBC 数据联调需按 Stage 3B 文档限定字段与范围，向外部模型发送前复核脱敏结果。
 
-文件数据库、规则 Stub 与本地身份是假设明确的阶段实现，不能宣称已达到完整生产准入标准。真实只读联调、身份源和生产门禁仍有缺口；下一项开发按主路线推进 Stage 3C 美团订单模拟适配与端到端验收。
+文件数据库、规则 Stub 与本地身份是假设明确的阶段实现，不能宣称已达到完整生产准入标准。真实只读联调、身份源和生产门禁仍有缺口；Stage 3C 已补充适配与回归，下一项按主路线进入订单 RAG/Memory；真实模型验收继续单列。
 
 ## 代码导航
 
@@ -144,4 +145,3 @@ DeepSeek 官方接口于 2026-11-11 返回 `deepseek-flash`、`deepseek-v4-pro`�
 - `persistence/FileTaskRepository.java`：单机原子快照。
 - `evaluation/EvaluationRunner.java`：同条件对照、逐例评分与轨迹导出。
 - `docs/design/04-agent-development-roadmap-v0.3.md`：当前执行路线、进度、订单验收标准与库存延后范围；其他设计文档保留历史协议供参考。
-

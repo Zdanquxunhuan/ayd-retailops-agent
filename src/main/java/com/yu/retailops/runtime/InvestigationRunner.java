@@ -39,7 +39,7 @@ public class InvestigationRunner {
 
     public void run(Task task, Planner planner, Consumer<Task> checkpoint, BooleanSupplier cancelled) {
         long start = System.nanoTime(), previousMillis = task.activeMillis;
-        task.promptVersion = "order-investigation-v10";
+        task.promptVersion = "order-investigation-v11";
         task.schemaVersion = "investigation-v2";
         if (task.investigation == null) {
             task.investigation = new Trace();
@@ -63,7 +63,7 @@ public class InvestigationRunner {
                 check(task, start, previousMillis, cancelled);
                 if (!fresh(task, LOCAL)) invoke(task, LOCAL, "Java 基础状态采集", checkpoint);
                 Evidence local = ReportPolicy.latest(task.evidence, LOCAL);
-                if (local.result().complete() && local.result().status() == ResultStatus.NOT_FOUND && "ABSENT".equals(local.result().outcome())) {
+                if (task.investigation.intent == Intent.CHECK_STATUS && local.result().complete() && local.result().status() == ResultStatus.NOT_FOUND && "ABSENT".equals(local.result().outcome())) {
                     check(task, start, previousMillis, cancelled);
                     if (!fresh(task, PLATFORM)) invoke(task, PLATFORM, "Java 基础状态采集", checkpoint);
                 }
