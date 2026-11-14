@@ -39,7 +39,7 @@ public class InvestigationRunner {
 
     public void run(Task task, Planner planner, Consumer<Task> checkpoint, BooleanSupplier cancelled) {
         long start = System.nanoTime(), previousMillis = task.activeMillis;
-        task.promptVersion = "order-investigation-v13";
+        task.promptVersion = "order-investigation-v14";
         task.schemaVersion = "investigation-v2";
         if (task.investigation == null) {
             task.investigation = new Trace();
@@ -84,7 +84,7 @@ public class InvestigationRunner {
             task.agentState.nextStep = "PLAN";
             while (true) {
                 check(task, start, previousMillis, cancelled);
-                if (task.decisions >= maxDecisions - (planner instanceof DiagnosisReviewer ? 1 : 0)) throw new Stop("BUDGET_EXHAUSTED");
+                if (task.decisions >= maxDecisions) throw new Stop("BUDGET_EXHAUSTED");
                 task.decisions++;
                 int investigationRound = ++task.investigation.investigationRounds;
                 events.event(task, Status.PLANNING, "INVESTIGATION_STARTED", "模型更新假设并选择下一项调查。", checkpoint);
@@ -123,7 +123,8 @@ public class InvestigationRunner {
                     }
                     throw new Stop(code);
                 }
-                if ((proposal.action() == Action.DIAGNOSIS_READY || proposal.action() == Action.NEEDS_HUMAN && !proposal.claims().isEmpty()) && planner instanceof DiagnosisReviewer reviewer) {
+                if (requiresSemanticReview(proposal, hypotheses, task) && planner instanceof DiagnosisReviewer reviewer) {
+                    if (task.decisions >= maxDecisions) throw new Stop("SEMANTIC_REVIEW_BUDGET_EXHAUSTED");
                     task.decisions++;
                     events.event(task, Status.REASONING, "SEMANTIC_REVIEW_STARTED", "独立检查证据与诊断结论；计入模型预算。", checkpoint);
                     Future<DiagnosisReviewer.ReviewReply> reviewFuture = executor.submit(() -> reviewer.review(context, proposal));
@@ -204,6 +205,21 @@ public class InvestigationRunner {
             task.activeMillis = previousMillis + (System.nanoTime() - start) / 1_000_000;
             checkpoint.accept(task);
         }
+    }
+
+    /** Escalate observable ambiguity; this is not a natural-language truth detector. */
+    static boolean requiresSemanticReview(Proposal p, List<Hypothesis> hypotheses, Task task) {
+        if (p.action() == Action.QUERY || p.action() == Action.ASK_USER) return false;
+        if (task.investigation.semanticCorrectionUsed) return true;
+        if (p.claims().isEmpty()) return false;
+        if (p.action() == Action.NEEDS_HUMAN) return true;
+        if (task.evidence.stream().anyMatch(e -> !e.simulated())
+                && task.evidence.stream().anyMatch(Evidence::simulated)) return true;
+        if (hypotheses.stream().anyMatch(h -> !h.contradictingEvidenceIds().isEmpty())) return true;
+        if (hypotheses.stream().filter(h -> h.status() == HypothesisStatus.SUPPORTED).count() > 1) return true;
+        Set<String> cited = new HashSet<>();
+        p.claims().forEach(c -> cited.addAll(c.evidenceIds()));
+        return task.evidence.stream().anyMatch(e -> cited.contains(e.id()) && !e.result().complete());
     }
 
     private void check(Task task, long start, long previous, BooleanSupplier cancelled) {

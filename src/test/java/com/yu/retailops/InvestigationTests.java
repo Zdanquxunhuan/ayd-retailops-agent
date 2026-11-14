@@ -231,15 +231,15 @@ class InvestigationTests {
         assertEquals("INSUFFICIENT_INVESTIGATION", task.investigation.stopCode);
         assertTrue(task.investigation.claims.isEmpty());
     }
-    @Test void causeReportCannotFinishWithMissingPosObservedBeforeLaterLogs() {
+    @Test void qualifiedCauseMayUseTimestampedBaselineWithoutMandatoryPosRecheck() {
         Task task = task("investigation-reversal", Intent.DIAGNOSE_CAUSE);
         AtomicInteger round = new AtomicInteger();
         run(task, c -> round.incrementAndGet() == 1 ? query(LOGS, List.of(initial()))
                 : new Proposal(Action.DIAGNOSIS_READY, "premature conclusion", List.of(), null,
                 List.of(new Claim("可能延迟", List.of(id(c, LOGS)), Qualification.HYPOTHESIS)), List.of("精确原因未知")));
-        assertEquals("POS_RECHECK_REQUIRED", task.investigation.stopCode);
-        assertFalse(task.investigation.turns.get(1).accepted());
-        assertTrue(task.investigation.claims.isEmpty());
+        assertEquals("INVESTIGATION_READY", task.investigation.stopCode);
+        assertTrue(task.investigation.turns.get(1).accepted());
+        assertFalse(task.investigation.claims.isEmpty());
     }
     @Test void clarificationPreservesExplicitIntent(@TempDir Path dir) throws Exception {
         try (var repository = new FileTaskRepository(dir, json);
@@ -314,5 +314,25 @@ class InvestigationTests {
         assertFalse(task.investigation.turns.get(0).accepted());
         assertTrue(task.investigation.turns.get(1).accepted());
         assertEquals(List.of(1, 2), task.investigation.turns.stream().map(Turn::round).toList());
+    }
+
+    @Test void clearLogDiagnosisUsesTwoModelCallsAndNoIndependentReview() {
+        Task task = task("meituan-db-failure", Intent.DIAGNOSE_CAUSE);
+        AtomicInteger rounds = new AtomicInteger();
+        class Simple extends ScriptedPlanner implements DiagnosisReviewer {
+            Simple() { super(c -> rounds.incrementAndGet() == 1 ? query(LOGS, List.of(initial())) :
+                    new Proposal(Action.DIAGNOSIS_READY, "保存异常可能影响同步", List.of(), null,
+                            List.of(new Claim("日志记录保存异常，可能影响同步；历史响应未知",
+                                    List.of(id(c, LOGS)), Qualification.HYPOTHESIS)), List.of("历史响应未知"))); }
+            public ReviewReply review(com.yu.retailops.domain.Investigation.Context c, Proposal p) {
+                throw new AssertionError("Clear qualified diagnosis should not require a review call");
+            }
+        }
+        runner.run(task, new Simple(), ignored -> {}, () -> false);
+        assertEquals("INVESTIGATION_READY", task.investigation.stopCode);
+        assertEquals(2, task.decisions);
+        assertEquals(3, task.toolCalls);
+        assertTrue(task.investigation.semanticReviews.isEmpty());
+        assertEquals("UNCONFIRMED", task.report.rootCauseStatus());
     }
 }

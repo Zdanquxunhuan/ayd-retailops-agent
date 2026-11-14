@@ -69,18 +69,8 @@ public class InvestigationPolicy {
             if (p.action() == Action.DIAGNOSIS_READY) {
                 require(task.evidence.stream().anyMatch(e -> Set.of(ReadOnlyGateway.LOGS, ReadOnlyGateway.PUSH_HISTORY).contains(e.tool()))
                         && p.claims().stream().anyMatch(c -> c.qualification() == Qualification.HYPOTHESIS), "INSUFFICIENT_INVESTIGATION");
-                int lastPos = -1, lastInvestigation = -1;
-                for (int i = 0; i < task.evidence.size(); i++) {
-                    String tool = task.evidence.get(i).tool();
-                    if (ReadOnlyGateway.POS.equals(tool)) lastPos = i;
-                    if (Set.of(ReadOnlyGateway.LOGS, ReadOnlyGateway.PUSH_HISTORY).contains(tool))
-                        lastInvestigation = i;
-                }
-                Evidence pos = lastPos < 0 ? null : task.evidence.get(lastPos);
-                boolean found = pos != null && pos.result().complete() && pos.result().status() == ResultStatus.SUCCESS
-                        && "FOUND".equals(pos.result().outcome()) && pos.validUntil().isAfter(clock.instant());
-                // Conservative final-status gate, independent of model interpretation of log contents.
-                require(found || lastPos > lastInvestigation, "POS_RECHECK_REQUIRED");
+                // Read-only qualified diagnosis may use the timestamped baseline POS observation.
+                // Additional queries are chosen by the model when evidence suggests a state change.
                 // Citing a failed/incomplete observation cannot turn it into positive investigative evidence.
                 for (Claim claim : p.claims())
                     if (claim.qualification() == Qualification.HYPOTHESIS) usable(claim.evidenceIds(), task);
