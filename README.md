@@ -145,3 +145,5 @@ DeepSeek 官方接口于 2026-11-11 返回 `deepseek-flash`、`deepseek-v4-pro`�
 - `persistence/FileTaskRepository.java`：单机原子快照。
 - `evaluation/EvaluationRunner.java`：同条件对照、逐例评分与轨迹导出。
 - `docs/design/04-agent-development-roadmap-v0.3.md`：当前执行路线、进度、订单验收标准与库存延后范围；其他设计文档保留历史协议供参考。
+
+Stage 3D 诊断语义审查与验证边界：[说明](docs/stage3d-semantic-review.md)。

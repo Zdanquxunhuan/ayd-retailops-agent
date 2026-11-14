@@ -260,4 +260,25 @@ class InvestigationTests {
             assertEquals(Status.CANCELLED, repository.get(task.id).status);
         }
     }
+
+    @Test void semanticRejectionPreservesBusinessFactsAndConsumesBudget() {
+        Task task = task("meituan-db-failure", Intent.DIAGNOSE_CAUSE);
+        class ReviewedPlanner extends ScriptedPlanner implements DiagnosisReviewer {
+            ReviewedPlanner() { super(c -> new Proposal(Action.NEEDS_HUMAN, "待审查", List.of(), null,
+                    List.of(new Claim("POS 已收到", List.of(id(c, POS)), Qualification.HYPOTHESIS)),
+                    List.of("缺少证据"))); }
+            public ReviewReply review(com.yu.retailops.domain.Investigation.Context c, Proposal p) {
+                return new ReviewReply(new ReviewResult(false, List.of(new Finding("SOURCE_CONFUSION",
+                        "POS 缺失不能证明收到", List.of(id(c, POS))))), 7, 3);
+            }
+        }
+        runner.run(task, new ReviewedPlanner(), ignored -> {}, () -> false);
+        assertEquals("SEMANTIC_REVIEW_REJECTED", task.investigation.stopCode);
+        assertEquals(Status.NEEDS_HUMAN, task.status);
+        assertEquals(2, task.decisions);
+        assertEquals(37, task.promptTokens);
+        assertTrue(task.investigation.claims.isEmpty());
+        assertEquals(1, task.investigation.semanticReviews.size());
+        assertEquals(2, task.evidence.size());
+    }
 }

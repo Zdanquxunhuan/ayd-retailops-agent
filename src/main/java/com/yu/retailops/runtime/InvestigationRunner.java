@@ -39,7 +39,7 @@ public class InvestigationRunner {
 
     public void run(Task task, Planner planner, Consumer<Task> checkpoint, BooleanSupplier cancelled) {
         long start = System.nanoTime(), previousMillis = task.activeMillis;
-        task.promptVersion = "order-investigation-v11";
+        task.promptVersion = "order-investigation-v12";
         task.schemaVersion = "investigation-v2";
         if (task.investigation == null) {
             task.investigation = new Trace();
@@ -82,7 +82,7 @@ public class InvestigationRunner {
             task.agentState.nextStep = "PLAN";
             while (true) {
                 check(task, start, previousMillis, cancelled);
-                if (task.decisions >= maxDecisions) throw new Stop("BUDGET_EXHAUSTED");
+                if (task.decisions >= maxDecisions - (planner instanceof DiagnosisReviewer ? 1 : 0)) throw new Stop("BUDGET_EXHAUSTED");
                 task.decisions++;
                 events.event(task, Status.PLANNING, "INVESTIGATION_STARTED", "模型更新假设并选择下一项调查。", checkpoint);
                 Context context = new ContextBuilder().build(task, gateway.definitions(),
@@ -119,6 +119,29 @@ public class InvestigationRunner {
                         continue;
                     }
                     throw new Stop(code);
+                }
+                if ((proposal.action() == Action.DIAGNOSIS_READY || proposal.action() == Action.NEEDS_HUMAN && !proposal.claims().isEmpty()) && planner instanceof DiagnosisReviewer reviewer) {
+                    task.decisions++;
+                    events.event(task, Status.REASONING, "SEMANTIC_REVIEW_STARTED", "独立检查证据与诊断结论；计入模型预算。", checkpoint);
+                    Future<DiagnosisReviewer.ReviewReply> reviewFuture = executor.submit(() -> reviewer.review(context, proposal));
+                    DiagnosisReviewer.ReviewReply review;
+                    try {
+                        review = reviewFuture.get(Math.min(30000, Math.max(1, timeoutMillis - task.activeMillis)), TimeUnit.MILLISECONDS);
+                    } finally {
+                        if (!reviewFuture.isDone()) reviewFuture.cancel(true);
+                    }
+                    if (review == null) throw new Stop("INVALID_SEMANTIC_REVIEW");
+                    task.promptTokens += Math.max(0, review.promptTokens());
+                    task.completionTokens += Math.max(0, review.completionTokens());
+                    check(task, start, previousMillis, cancelled);
+                    var result = review.result();
+                    if (result == null || result.approved() == null || result.findings() == null)
+                        throw new Stop("INVALID_SEMANTIC_REVIEW");
+                    task.investigation.semanticReviews.add(result);
+                    if (!result.approved() || !result.findings().isEmpty()) {
+                        task.investigation.turns.add(new Turn(task.decisions, clock.instant(), proposal, false, "SEMANTIC_REVIEW_REJECTED"));
+                        throw new Stop("SEMANTIC_REVIEW_REJECTED");
+                    }
                 }
                 task.agentState.feedback = null;
                 task.investigation.turns.add(new Turn(task.decisions, clock.instant(), proposal, true, "ACCEPTED"));

@@ -15,12 +15,12 @@ import java.util.*;
 /**
  * JSON-mode model adapter. JSON syntax is insufficient: Runtime validates semantics locally.
  */
-public class JsonModelPlanner implements Planner, InvestigationPlanner {
+public class JsonModelPlanner implements Planner, InvestigationPlanner, com.yu.retailops.runtime.DiagnosisReviewer {
     private final JsonMapper json = JsonMapper.builder().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
     private final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private final URI endpoint;
     private final String model, apiKey;
-    private final String prompt, investigationPrompt;
+    private final String prompt, investigationPrompt, reviewPrompt;
     private final RemoteRequestBudget budget;
 
     public JsonModelPlanner(String endpoint, String model, String apiKey) throws Exception {
@@ -35,7 +35,8 @@ public class JsonModelPlanner implements Planner, InvestigationPlanner {
         if (!"https".equals(this.endpoint.getScheme()) || model.isBlank() || apiKey.isBlank())
             throw new IllegalArgumentException("HTTPS endpoint, model name and API key are required for the real model adapter");
         prompt = loadPrompt("/prompts/order-diagnosis-v3.txt");
-        investigationPrompt = loadPrompt("/prompts/order-investigation-v11.txt");
+        investigationPrompt = loadPrompt("/prompts/order-investigation-v12.txt");
+        reviewPrompt = loadPrompt("/prompts/order-semantic-review-v1.txt");
     }
 
     private String loadPrompt(String resource) throws Exception {
@@ -84,6 +85,12 @@ public class JsonModelPlanner implements Planner, InvestigationPlanner {
     public Investigation.Reply investigate(Investigation.Context context) throws Exception {
         var decoded = decode(send(investigationRequestBody(context)), InvestigationDelta.class);
         return new Investigation.Reply(decoded.value().expand(context), decoded.promptTokens(), decoded.completionTokens());
+    }
+
+    public ReviewReply review(Investigation.Context context, Investigation.Proposal proposal) throws Exception {
+        var decoded = decode(send(requestBody(Map.of("context", context, "proposal", proposal),
+                reviewPrompt, 1600)), ReviewResult.class);
+        return new ReviewReply(decoded.value(), decoded.promptTokens(), decoded.completionTokens());
     }
 
     private byte[] send(Map<String, Object> body) throws Exception {
