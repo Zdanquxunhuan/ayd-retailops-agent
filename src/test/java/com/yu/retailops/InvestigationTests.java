@@ -231,15 +231,15 @@ class InvestigationTests {
         assertEquals("INSUFFICIENT_INVESTIGATION", task.investigation.stopCode);
         assertTrue(task.investigation.claims.isEmpty());
     }
-    @Test void causeReportCannotFinishWithMissingPosObservedBeforeLaterLogs() {
+    @Test void qualifiedCauseMayUseTimestampedBaselineWithoutMandatoryPosRecheck() {
         Task task = task("investigation-reversal", Intent.DIAGNOSE_CAUSE);
         AtomicInteger round = new AtomicInteger();
         run(task, c -> round.incrementAndGet() == 1 ? query(LOGS, List.of(initial()))
                 : new Proposal(Action.DIAGNOSIS_READY, "premature conclusion", List.of(), null,
                 List.of(new Claim("可能延迟", List.of(id(c, LOGS)), Qualification.HYPOTHESIS)), List.of("精确原因未知")));
-        assertEquals("POS_RECHECK_REQUIRED", task.investigation.stopCode);
-        assertFalse(task.investigation.turns.get(1).accepted());
-        assertTrue(task.investigation.claims.isEmpty());
+        assertEquals("INVESTIGATION_READY", task.investigation.stopCode);
+        assertTrue(task.investigation.turns.get(1).accepted());
+        assertFalse(task.investigation.claims.isEmpty());
     }
     @Test void clarificationPreservesExplicitIntent(@TempDir Path dir) throws Exception {
         try (var repository = new FileTaskRepository(dir, json);
@@ -261,8 +261,11 @@ class InvestigationTests {
         }
     }
 
-    @Test void semanticRejectionPreservesBusinessFactsAndConsumesBudget() {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = {0, 4})
+    void semanticRejectionPreservesBusinessFactsAndConsumesBudget(int alreadyUsed) {
         Task task = task("meituan-db-failure", Intent.DIAGNOSE_CAUSE);
+        task.decisions = alreadyUsed;
         class ReviewedPlanner extends ScriptedPlanner implements DiagnosisReviewer {
             ReviewedPlanner() { super(c -> new Proposal(Action.NEEDS_HUMAN, "待审查", List.of(), null,
                     List.of(new Claim("POS 已收到", List.of(id(c, POS)), Qualification.HYPOTHESIS)),
@@ -275,10 +278,61 @@ class InvestigationTests {
         runner.run(task, new ReviewedPlanner(), ignored -> {}, () -> false);
         assertEquals("SEMANTIC_REVIEW_REJECTED", task.investigation.stopCode);
         assertEquals(Status.NEEDS_HUMAN, task.status);
-        assertEquals(2, task.decisions);
-        assertEquals(37, task.promptTokens);
+        assertEquals(alreadyUsed == 0 ? 4 : 6, task.decisions);
+        assertEquals(alreadyUsed == 0 ? 74 : 37, task.promptTokens);
         assertTrue(task.investigation.claims.isEmpty());
-        assertEquals(1, task.investigation.semanticReviews.size());
+        assertEquals(alreadyUsed == 0 ? 2 : 1, task.investigation.semanticReviews.size());
+        assertEquals(alreadyUsed == 0 ? List.of(1, 2) : List.of(1), task.investigation.turns.stream().map(Turn::round).toList());
+        assertEquals(alreadyUsed == 0, task.investigation.semanticCorrectionUsed);
         assertEquals(2, task.evidence.size());
+    }
+
+    @Test void correctedClaimMustPassSecondIndependentReview() {
+        Task task = task("meituan-db-failure", Intent.DIAGNOSE_CAUSE);
+        AtomicInteger calls = new AtomicInteger();
+        class Correcting extends ScriptedPlanner implements DiagnosisReviewer {
+            Correcting() { super(c -> {
+                boolean correcting = c.validationFeedback() != null;
+                return new Proposal(Action.NEEDS_HUMAN, "证据不足", List.of(), null,
+                        List.of(new Claim(correcting ? "历史响应情况未知" : "历史没有响应",
+                                List.of(id(c, POS)), Qualification.HYPOTHESIS)), List.of("需要历史响应证据"));
+            }); }
+            public ReviewReply review(com.yu.retailops.domain.Investigation.Context c, Proposal p) {
+                boolean approved = calls.incrementAndGet() == 2;
+                if (approved) {
+                    assertEquals("SEMANTIC_REVIEW_REJECTED", c.validationFeedback().code());
+                    assertEquals("历史响应情况未知", p.claims().get(0).text());
+                }
+                return new ReviewReply(new ReviewResult(approved, approved ? List.of() :
+                        List.of(new Finding("TEMPORAL_OVERREACH", "当前缺失不能反推历史响应", List.of(id(c, POS))))), 5, 2);
+            }
+        }
+        runner.run(task, new Correcting(), ignored -> {}, () -> false);
+        assertEquals(2, calls.get());
+        assertEquals(4, task.decisions);
+        assertEquals("历史响应情况未知", task.investigation.claims.get(0).text());
+        assertFalse(task.investigation.turns.get(0).accepted());
+        assertTrue(task.investigation.turns.get(1).accepted());
+        assertEquals(List.of(1, 2), task.investigation.turns.stream().map(Turn::round).toList());
+    }
+
+    @Test void clearLogDiagnosisUsesTwoModelCallsAndNoIndependentReview() {
+        Task task = task("meituan-db-failure", Intent.DIAGNOSE_CAUSE);
+        AtomicInteger rounds = new AtomicInteger();
+        class Simple extends ScriptedPlanner implements DiagnosisReviewer {
+            Simple() { super(c -> rounds.incrementAndGet() == 1 ? query(LOGS, List.of(initial())) :
+                    new Proposal(Action.DIAGNOSIS_READY, "保存异常可能影响同步", List.of(), null,
+                            List.of(new Claim("日志记录保存异常，可能影响同步；历史响应未知",
+                                    List.of(id(c, LOGS)), Qualification.HYPOTHESIS)), List.of("历史响应未知"))); }
+            public ReviewReply review(com.yu.retailops.domain.Investigation.Context c, Proposal p) {
+                throw new AssertionError("Clear qualified diagnosis should not require a review call");
+            }
+        }
+        runner.run(task, new Simple(), ignored -> {}, () -> false);
+        assertEquals("INVESTIGATION_READY", task.investigation.stopCode);
+        assertEquals(2, task.decisions);
+        assertEquals(3, task.toolCalls);
+        assertTrue(task.investigation.semanticReviews.isEmpty());
+        assertEquals("UNCONFIRMED", task.report.rootCauseStatus());
     }
 }
