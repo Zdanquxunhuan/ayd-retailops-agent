@@ -88,7 +88,7 @@ public class InvestigationDemoRunner implements ApplicationRunner {
                 .append("。停止原因：").append(task.investigation.stopCode).append("。\n\n")
                 .append("当前业务结论（Java）：").append(task.report.outcome()).append("。 ").append(task.report.summary()).append("\n\n")
                 .append("历史根因：UNCONFIRMED。未执行任何修复。模型解释只供审阅，不等于已验证的因果事实。\n\n")
-                .append("模型决策次数：").append(task.decisions).append("；工具调用：").append(task.toolCalls)
+                .append("模型请求次数（含审查）：").append(task.decisions).append("；工具调用：").append(task.toolCalls)
                 .append("；输入/输出 Token：").append(task.promptTokens).append(" / ").append(task.completionTokens).append("。\n\n")
                 .append("## 模型每一步做了什么\n\n|轮次|动作|校验|简短理由|要验证的问题|\n|---:|---|---|---|---|\n");
         for (var turn : task.investigation.turns) {

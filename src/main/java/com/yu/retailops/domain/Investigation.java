@@ -87,6 +87,8 @@ public final class Investigation {
         public String rootCauseStatus = "UNCONFIRMED";
         public String explanationNotice = "以下为模型提出的调查假设；Java 仅校验引用和动作约束，不确认自然语言因果关系。";
         public List<com.yu.retailops.runtime.DiagnosisReviewer.ReviewResult> semanticReviews = new ArrayList<>();
+        public boolean semanticCorrectionUsed;
+        public int investigationRounds;
         public String stopCode;
     }
 }

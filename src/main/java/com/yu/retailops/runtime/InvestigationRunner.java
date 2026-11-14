@@ -39,7 +39,7 @@ public class InvestigationRunner {
 
     public void run(Task task, Planner planner, Consumer<Task> checkpoint, BooleanSupplier cancelled) {
         long start = System.nanoTime(), previousMillis = task.activeMillis;
-        task.promptVersion = "order-investigation-v12";
+        task.promptVersion = "order-investigation-v13";
         task.schemaVersion = "investigation-v2";
         if (task.investigation == null) {
             task.investigation = new Trace();
@@ -79,11 +79,14 @@ public class InvestigationRunner {
                 finish(task, Status.NEEDS_HUMAN, "INVESTIGATION_MODEL_NOT_CONFIGURED", checkpoint);
                 return;
             }
+            task.investigation.investigationRounds = Math.max(task.investigation.investigationRounds,
+                    task.investigation.turns.stream().mapToInt(Turn::round).max().orElse(0));
             task.agentState.nextStep = "PLAN";
             while (true) {
                 check(task, start, previousMillis, cancelled);
                 if (task.decisions >= maxDecisions - (planner instanceof DiagnosisReviewer ? 1 : 0)) throw new Stop("BUDGET_EXHAUSTED");
                 task.decisions++;
+                int investigationRound = ++task.investigation.investigationRounds;
                 events.event(task, Status.PLANNING, "INVESTIGATION_STARTED", "模型更新假设并选择下一项调查。", checkpoint);
                 Context context = new ContextBuilder().build(task, gateway.definitions(),
                         new Budget(maxDecisions - task.decisions, maxTools - task.toolCalls,
@@ -105,7 +108,7 @@ public class InvestigationRunner {
                     hypotheses = proposals.validate(proposal, task);
                 } catch (IllegalArgumentException | SecurityException invalid) {
                     String code = invalid instanceof SecurityException ? "POLICY_DENIED" : invalid.getMessage();
-                    task.investigation.turns.add(new Turn(task.decisions, clock.instant(), proposal, false, code));
+                    task.investigation.turns.add(new Turn(investigationRound, clock.instant(), proposal, false, code));
                     String correction = switch (code) {
                         case "INVALID_INVESTIGATION_QUERY" -> "QUERY 必须引用已存在或本轮完整新增的假设 id；补齐 hypothesisUpdates，并检查 query 字段。";
                         case "HYPOTHESIS_REVIEW_REQUIRED" -> "reviews 必须逐项覆盖上下文的所有旧假设，并完整引用 newEvidenceIds。";
@@ -139,16 +142,28 @@ public class InvestigationRunner {
                         throw new Stop("INVALID_SEMANTIC_REVIEW");
                     task.investigation.semanticReviews.add(result);
                     if (!result.approved() || !result.findings().isEmpty()) {
-                        task.investigation.turns.add(new Turn(task.decisions, clock.instant(), proposal, false, "SEMANTIC_REVIEW_REJECTED"));
+                        task.investigation.turns.add(new Turn(investigationRound, clock.instant(), proposal, false, "SEMANTIC_REVIEW_REJECTED"));
+                        task.investigation.unresolvedQuestions = List.of(
+                                "最新 POS 查询：" + ReportPolicy.latest(task.evidence, POS).result().outcome() + "；仅代表该次查询观察，历史投递、响应与因果关系仍需核对。",
+                                "诊断未通过独立语义审查，审查意见属于模型判断，需修正或人工核实。");
+                        task.agentState.feedback = new ValidationFeedback("SEMANTIC_REVIEW_REJECTED",
+                                "根据以下审查意见重新核对证据；意见不是事实。保留原始观察，撤回过强结论，命题改变时新增假设。修正后的结论必须再次审查。\n"
+                                        + result.findings(), proposal);
+                        if (!task.investigation.semanticCorrectionUsed && maxDecisions - task.decisions >= 2) {
+                            task.investigation.semanticCorrectionUsed = true;
+                            events.event(task, Status.REASONING, "SEMANTIC_CORRECTION_REQUESTED",
+                                    "允许一次修正并预留再次审查预算；拒绝的提议未写入假设或结论。", checkpoint);
+                            continue;
+                        }
                         throw new Stop("SEMANTIC_REVIEW_REJECTED");
                     }
                 }
                 task.agentState.feedback = null;
-                task.investigation.turns.add(new Turn(task.decisions, clock.instant(), proposal, true, "ACCEPTED"));
+                task.investigation.turns.add(new Turn(investigationRound, clock.instant(), proposal, true, "ACCEPTED"));
                 task.investigation.hypotheses = new ArrayList<>(hypotheses);
                 task.investigation.reviewedEvidenceIds = task.evidence.stream().map(Evidence::id).toList();
                 for (Hypothesis h : proposal.hypothesisUpdates())
-                    task.investigation.hypothesisHistory.add(new Revision(task.decisions, clock.instant(), h));
+                    task.investigation.hypothesisHistory.add(new Revision(investigationRound, clock.instant(), h));
                 task.investigation.unresolvedQuestions = List.copyOf(proposal.unresolvedQuestions());
                 task.agentState.pendingQuery = proposal.query();
                 task.agentState.nextStep = proposal.action().name();

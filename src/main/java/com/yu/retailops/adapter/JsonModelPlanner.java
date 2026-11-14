@@ -35,8 +35,8 @@ public class JsonModelPlanner implements Planner, InvestigationPlanner, com.yu.r
         if (!"https".equals(this.endpoint.getScheme()) || model.isBlank() || apiKey.isBlank())
             throw new IllegalArgumentException("HTTPS endpoint, model name and API key are required for the real model adapter");
         prompt = loadPrompt("/prompts/order-diagnosis-v3.txt");
-        investigationPrompt = loadPrompt("/prompts/order-investigation-v12.txt");
-        reviewPrompt = loadPrompt("/prompts/order-semantic-review-v1.txt");
+        investigationPrompt = loadPrompt("/prompts/order-investigation-v13.txt");
+        reviewPrompt = loadPrompt("/prompts/order-semantic-review-v2.txt");
     }
 
     private String loadPrompt(String resource) throws Exception {
