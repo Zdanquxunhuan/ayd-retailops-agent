@@ -114,6 +114,10 @@ public class InvestigationDemoRunner implements ApplicationRunner {
                         .append('|').append(review.disposition()).append('|').append(cell(String.valueOf(review.assessedEvidenceIds())))
                         .append('|').append(cell(review.reason())).append("|\n");
         md.append("\n## 调查解释与未解决问题\n\n");
+        md.append("\n### 独立语义审查（不确认根因）\n\n");
+        for (var review : task.investigation.semanticReviews)
+            md.append("- approved=").append(review.approved()).append("; findings=")
+                    .append(cell(String.valueOf(review.findings()))).append("\n");
         for (var c : task.investigation.claims)
             md.append("- [").append(c.qualification()).append("] ").append(cell(c.text()))
                     .append(" 引用：").append(c.evidenceIds()).append("\n");
