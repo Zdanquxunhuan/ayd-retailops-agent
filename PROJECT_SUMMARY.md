@@ -1,10 +1,10 @@
 # OmniOps Agent：零售订单诊断与异常调查
 
-> 仓库项目名：`ayd-retailops-agent` · 更新时间：2026-11-12 · 当前阶段：Stage 1E
+> 仓库项目名：`ayd-retailops-agent` · 更新时间：2026-11-16 · 当前阶段：Stage 2/3 工程底座已实现，下一项 Stage 4A 订单 RAG
 >
 > 基于 Java 17 与 Spring Boot 的只读订单诊断 Agent 原型。大模型解释日志、提出假设并选择调查工具；Java 执行查询、校验证据、控制权限与预算，并生成当前业务状态结论。
 
-**当前业务数据全部来自模拟场景，尚未接入生产订单、POS 或美团接口。** 真实模型已经参与多轮调查，但复杂反证场景仍未完整通过验证。本项目适合用于学习、演示和研究 Agent 工程，不是可直接处理生产订单的自动运维系统。
+**默认使用模拟业务数据；已实现可选的本地日志副本、MySQL/SQL Server 只读适配，真实数据库联调待完成；美团仍模拟。** 真实百炼已参与调查，当前 v15 仍有提前结束等反馈，不代表调查质量已稳定。业务写操作尚未实现。完整现状、后续开发和简历证据统一见[开发路线与 Agent 能力设计](docs/design/04-agent-development-roadmap-v0.3.md)。
 
 ## 1. 项目要解决什么问题
 
@@ -21,15 +21,17 @@
 
 |模块|当前能力|
 |---|---|
-|任务 API|异步提交、任务查询、补充门店/订单、版本校验、取消、事件轮询|
+|任务 API|异步提交、任务查询、补充门店/订单、版本校验、调查补问/暂停恢复、取消、事件轮询|
 |状态诊断|判断已同步、补推建议、恢复建议、平台查询窗口外及无法确认|
 |模型调查|读取证据、建立假设、选择只读查询、增量修改假设、解释未知项|
 |假设管理|区分当前与历史命题，保存时间范围、可推翻条件、支持与反证引用|
 |逐轮复核|要求模型对每个旧假设给出更新或维持理由，保留版本历史|
 |工具控制|五个只读工具；校验白名单、门店范围及订单目标|
+|只读适配|有界执行；本地日志事件与脱敏；可选 JDBC 固定 SQL；美团模拟原始响应校验|
 |执行预算|限制模型请求、决策、工具次数、活动时间和重复查询|
 |纠正机制|对指定契约错误允许每任务最多一次模型重写，仍计入调用预算|
-|本地持久化|JSON 快照、同步落盘、原子替换、文件锁；中断任务重启后保留证据并转人工|
+|单机 Checkpoint|JSON 快照、同步落盘、原子替换、文件锁；调查重启后暂停，显式恢复保留累计预算；旧 agent/workflow 转人工|
+|语义审查|对可观察歧义调用百炼审查；拒绝后预算允许时纠正一次并再审查，根因仍未确认|
 |演示与评估|规则流程对照、单任务真实模型调查、Markdown/JSON 轨迹导出|
 |模型接入|百炼 qwen-flash 预设，以及兼容 Chat Completions JSON 协议的 remote 适配器|
 
@@ -54,7 +56,7 @@
 |构建|Maven Wrapper，配置的 Maven 发行版为 3.10.0|
 |模型 HTTP 调用|JDK HttpClient，无单独模型 SDK|
 |JSON|Jackson，严格字段解析与尾随内容检查|
-|存储|本地 JSON 文件；无数据库服务依赖|
+|存储|任务为本地 JSON；默认不依赖数据库服务，可选 JDBC 查询业务库；Agent PostgreSQL/向量库待开发|
 |测试|Spring Boot Test、JUnit，包含真实本地 HTTP API 测试|
 |操作入口|REST API、PowerShell 脚本、生成的 Markdown 报告；暂无前端聊天界面|
 
@@ -149,7 +151,7 @@ $jdkPath = 'C:\path\to\jdk-17'
     -Provider qwen -Fixture investigation-reversal -MaxRequests 6
 ```
 
-这会产生真实 API 请求和费用，但业务数据仍为模拟。`MaxRequests` 是**本进程**模型请求总上限，包含失败请求，进程重启后重新计数；不是账户级或跨进程的累计限额。
+这会产生真实 API 请求和费用；默认配置下业务数据仍为模拟。`MaxRequests` 是**本进程**模型请求总上限，包含失败请求，进程重启后重新计数；不是账户级或跨进程的累计限额。
 
 可选场景：`investigation-reversal`（迟到回执与状态复核）、`investigation-no-history`（历史缺失）、`investigation-injection`（日志中混入操作指令）。
 
@@ -214,27 +216,29 @@ Invoke-RestMethod "http://127.0.0.1:8080/api/tasks/$($task.id)/investigation"
 
 ## 7. 验证结果与当前限制
 
-截至本次整理，最近构建成功，**68 项本地测试通过**。覆盖状态门槛、工具授权、伪造引用、证据过期、假设历史保留、当前与历史区分、增量展开、预算、取消、一次纠正及 HTTP API。
+审查基线为 `master@d84e120`，其关联的 [JDK17 CI](https://github.com/Zdanquxunhuan/ayd-retailops-agent/actions/runs/43792030011) 为 **144 项测试通过**。覆盖状态/工具/引用校验、假设与预算、补问重启恢复、JDBC/日志/美团模拟契约及 HTTP API。这是既有代码的工程验证结果，本次仅整理文档，没有新增百炼调用。
 
-真实模型已使用模拟数据开展多轮验证。最新 Stage 1E 批次使用 28 次请求，其中包含多个 Prompt 版本的失败与复测：
+以下为历史 Stage 1E 的真实模型记录，当时使用 28 次请求，不能作为当前版本验收结论：
 
 - Prompt v6：多次输出格式不符合契约。
 - Prompt v7：查询与复查过程有所推进，结束类型和历史证据引用仍有错误。
-- 当前调查 Prompt v8：未知处理与日志注入样本有改善；反证场景仍未完整通过，历史缺失场景的调查覆盖仍需增强。
+- 当时调查 Prompt v8：未知处理与日志注入样本有改善；反证场景仍未完整通过，历史缺失场景的调查覆盖仍需增强。
 
 详见 [Stage 1E 实测记录](docs/stage1e-live-verification.md)。本地测试通过不等于模型原因解释准确；安全拦截有效也不等于调查成功。
 
+当前调查为 `order-investigation-v15`，审查为 `order-semantic-review-v2`。最新用户反馈中，v15 未查询历史便结束并被 `INSUFFICIENT_INVESTIGATION` 拦截。该问题、假设关系纠正和评估体系已登记至主路线 Stage 1F；下一项先做订单 SOP RAG。
+
 ### 仍未实现或未完成验证
 
-- 生产订单、POS、美团的真实只读适配器。
+- MySQL/SQL Server 的真实环境联调、真实美团 SDK/接口接入及完整业务载荷验证。
 - 自动修复、审批、写操作幂等及写后验证。
 - 库存同步调查、京东等其他平台扩展。
-- 自然语言自动识别门店/订单、多轮调查补问续跑。
-- 前端界面、RAG、历史案例检索和多 Agent 协作。
+- 自然语言自动识别门店/订单；多轮补问续跑已有工程测试，真实模型质量仍需评估。
+- 前端工作台、订单 RAG、可信案例 Memory 和分层上下文；多 Agent 不在当前主线。
 - 生产身份认证、多租户隔离、数据库存储及分布式执行。
 - 独立保留集、强规则基线、人工根因标注和可靠的收益评估。
 
-当前默认查询范围为 A001。旧诊断流程最多 8 次决策，调查流程最多 6 次；默认最多 12 次工具调用、120 秒活动时间。所有业务工具为 Stub，production/integration profile 和非回环监听被拒绝。故障后保留证据并安全停止，不自动恢复未完成调查。
+当前默认查询范围为 A001。旧诊断流程最多 8 次决策，调查流程最多 6 次（包含审查）；默认最多 12 次工具调用、120 秒活动时间。默认业务工具为模拟，可选本地日志/JDBC；production/integration profile 和非回环监听仍被拒绝。调查故障/暂停后保留证据，兼容任务支持显式恢复，旧路径仍安全停止。
 
 ## 8. 代码与文档导航
 
@@ -245,12 +249,12 @@ src/main/java/com/yu/retailops/
 ├── domain/         # 状态、证据、假设、复核契约
 ├── runtime/        # 执行循环与确定性校验
 ├── adapter/        # 模型 HTTP 适配、请求额度、增量输出展开
-├── tool/           # 只读网关与模拟数据目录
+├── tool/           # 注册表、执行器、日志/JDBC/美团模拟适配
 ├── persistence/    # 本地 JSON 原子快照
 └── evaluation/     # 对照评估、单任务演示与报告导出
 src/main/resources/
-├── prompts/        # 历次 Prompt，当前调查为 order-investigation-v8
-└── evaluation/     # 10 个状态场景、3 个调查场景
+├── prompts/        # 历次 Prompt，当前调查 v15、审查 v2
+└── evaluation/     # 10 个状态、3 个调查、16 个美团场景，及对应平台响应
 src/test/java/      # 回归与 API 测试
 scripts/stage1.ps1  # test / build / run / evaluate / investigate
 docs/              # 架构设计、阶段说明、实测记录与用户例子
@@ -258,13 +262,14 @@ docs/              # 架构设计、阶段说明、实测记录与用户例子
 
 推荐阅读顺序：
 
-1. [用户使用例子](docs/stage1e-user-examples.md)
-2. [大模型职责设计](docs/design/03-llm-responsibility-design.md)
-3. [Stage 1E 增量契约](docs/stage1e-delta-contract.md)
-4. [Stage 1E 实测结果](docs/stage1e-live-verification.md)
-5. [V0.2 架构评审](docs/design/01-architecture-review-v0.2.md)与[阶段路线图](docs/design/02-phased-design-v0.2.md)
+1. [当前开发路线、代码现状与求职交付](docs/design/04-agent-development-roadmap-v0.3.md)
+2. [用户使用例子](docs/stage1e-user-examples.md)
+3. [大模型职责设计](docs/design/03-llm-responsibility-design.md)
+4. [Stage 1E 增量契约](docs/stage1e-delta-contract.md)
+5. [Stage 1E 实测结果](docs/stage1e-live-verification.md)
+6. [V0.2 架构评审](docs/design/01-architecture-review-v0.2.md)与[阶段路线图](docs/design/02-phased-design-v0.2.md)
 
-早期阶段文档是历史快照，版本、测试数和结论可能早于本文。设计路线图不代表功能全部已实现。
+早期阶段文档是历史快照，版本、测试数和结论可能早于本文。Stage 2/3 的最新使用方法见 README 文档入口。后续统一按主路线推进：4A SOP RAG → 4B Memory → 4C 自然语言与 Context → 1F 调查评估 → 5 审批恢复/补推 → 6 交付 → 库存。设计路线图不代表功能全部已实现。
 
 ## 9. GitHub 提交范围
 
@@ -292,4 +297,4 @@ git diff --cached --stat
 git diff --cached
 ```
 
-当前未在本次整理中选择开源许可证；是否允许他人使用、修改和分发，应在确定授权方式后加入合适的 LICENSE。本次工作仅整理文档，没有执行 commit、push 或创建远程仓库。
+当前仓库未包含 LICENSE，正式公开交付时应明确授权范围。本次路线更新仅涉及文档，不修改业务代码或执行生产操作。

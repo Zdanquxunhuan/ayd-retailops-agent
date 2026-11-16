@@ -22,7 +22,7 @@ ContextBuilder 按服务端工具契约补充 sourceSystem、businessStage、lim
 
 ## 后续
 
-本版补齐一次受限纠正及再审查；下一步补充更广的真实模型评测集及人工标注，再进入 Stage 4 订单 RAG 与可信案例记忆。未确认的诊断不得作为已验证根因进入案例库。
+2026-11-16 更新：按[主路线](design/04-agent-development-roadmap-v0.3.md)先进入 Stage 4A 订单 SOP RAG，再做可信案例 Memory 与 Context。v15 过早结束、关系纠正和报告措辞等反馈统一登记在 Stage 1F；更广的真实模型评测及人工标注也在该阶段集中开展，不再阻塞独立的 RAG 工程开发。未确认的诊断不得作为已验证根因进入案例库。本页其余内容保留阶段实现与历史验收方法。
 
 ## 真实运行反馈修复
 
