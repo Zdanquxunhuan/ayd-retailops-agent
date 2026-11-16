@@ -78,12 +78,26 @@ public class InvestigationDemoRunner implements ApplicationRunner {
 
     public static String render(Task task) {
         StringBuilder md = new StringBuilder("# 大模型订单调查记录\n\n");
-        md.append("## 用日常使用的话说明\n\n")
-                .append("你问：").append(cell(task.input.userGoal())).append("\n\n")
-                .append("当前查到：").append(task.report.summary()).append("\n\n")
-                .append("原因调查：").append("INVESTIGATION_READY".equals(task.investigation.stopCode) ? "已生成供审阅的调查解释，仍未确认历史根因。" : "尚未完成可靠的原因判断；以下状态事实仍保留。")
-                .append("\n\n系统实际没有执行补推、恢复或其他业务修改。各条证据需按 simulated/source 区分来源；模拟观察不能用于处理真实订单。\n\n")
-                .append("接下来：历史原因需要核对推送记录、回执和业务日志；如果调查被程序拦截，应先修复调查流程再重跑。\n\n## 技术追踪记录\n\n");
+        md.append("## 调查结果\n\n你问：").append(cell(task.input.userGoal())).append("\n\n");
+        md.append("原因线索（模型解释，未确认根因）：\n\n");
+        if (task.investigation.claims.isEmpty()) {
+            md.append("尚无可展示的最终调查解释；请结合停止原因与下方工具观察处理。\n");
+        } else {
+            for (var claim : task.investigation.claims)
+                md.append("- ").append(claim.qualification() == com.yu.retailops.domain.Investigation.Qualification.HYPOTHESIS
+                        ? "待核实的可能原因（模型原文）：" : "尚不清楚（模型原文）：")
+                        .append(cell(claim.text())).append(" 引用：").append(claim.evidenceIds()).append("\n");
+        }
+        md.append("\n恢复/补推判断：").append(recoverySummary(task.report.outcome())).append("\n\n");
+        if (!task.investigation.unresolvedQuestions.isEmpty()) {
+            md.append("待核实事项：\n\n");
+            for (String question : task.investigation.unresolvedQuestions)
+                md.append("- ").append(cell(question)).append("\n");
+        } else {
+            md.append("模型未列出额外待核实事项；这不代表历史根因或后续重试情况已确认。\n");
+        }
+        md.append("\n下一步：").append(nextStep(task.report.outcome())).append("\n\n")
+                .append("未执行补推、恢复或其他业务修改。各条证据按 simulated/source 区分；模拟观察不能用于处理真实订单。\n\n## 技术追踪记录\n\n");
         md.append("业务数据：").append(task.report.dataSource()).append("。模型：").append(task.provider).append(" / ").append(task.modelVersion)
                 .append("。停止原因：").append(task.investigation.stopCode).append("。\n\n")
                 .append("当前业务结论（Java）：").append(task.report.outcome()).append("。 ").append(task.report.summary()).append("\n\n")
@@ -129,6 +143,25 @@ public class InvestigationDemoRunner implements ApplicationRunner {
             md.append('|').append(e.id()).append('|').append(e.tool()).append('|').append(e.result().status()).append('|')
                     .append(e.result().outcome()).append('|').append(cell(e.result().data().toString())).append("|\n");
         return md.append("\n完整提议、拒绝记录、假设版本、证据时间和事件见 trace.json。这是功能演示，不是模型收益或根因准确率评估。\n").toString();
+    }
+
+    private static String recoverySummary(Outcome outcome) {
+        return switch (outcome) {
+            case UNRESOLVED -> "尚未形成可用的恢复或补推处理建议；这不否定上方已发现的原因线索。";
+            case ALREADY_SYNCED -> "证据显示 POS 已存在该订单；无需据此重复补推，历史原因仍可继续调查。";
+            case REPUSH_RECOMMENDED -> "已有支持补推建议的观察，尚未执行；实际操作仍需权限与审批。";
+            case RESTORE_RECOMMENDED -> "已有支持恢复建议的观察，尚未执行；实际操作仍需权限与审批。";
+            case OUTSIDE_SEARCH_WINDOW -> "平台查询窗口受限，需门店人工处理；尚未执行任何操作。";
+        };
+    }
+
+    private static String nextStep(Outcome outcome) {
+        return switch (outcome) {
+            case UNRESOLVED -> "先核对原因线索及待核实事项；如需恢复订单，再补充平台订单可获取性及恢复条件。";
+            case ALREADY_SYNCED -> "如仍需解释历史异常，核对当时日志与重试记录。";
+            case REPUSH_RECOMMENDED, RESTORE_RECOMMENDED -> "进入实际处理前核对最新订单状态、真实数据与审批条件。";
+            case OUTSIDE_SEARCH_WINDOW -> "联系门店人工核实并按既有流程补推。";
+        };
     }
 
     private static String cell(String s) {

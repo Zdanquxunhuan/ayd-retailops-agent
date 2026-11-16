@@ -39,7 +39,7 @@ public class InvestigationRunner {
 
     public void run(Task task, Planner planner, Consumer<Task> checkpoint, BooleanSupplier cancelled) {
         long start = System.nanoTime(), previousMillis = task.activeMillis;
-        task.promptVersion = "order-investigation-v14";
+        task.promptVersion = "order-investigation-v15";
         task.schemaVersion = "investigation-v2";
         if (task.investigation == null) {
             task.investigation = new Trace();
