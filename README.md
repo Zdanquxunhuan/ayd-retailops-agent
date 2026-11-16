@@ -1,6 +1,8 @@
 # OmniOps Agent
 
-**开发主线：先完成美团订单调查与受控补推闭环，再开发库存。** 后续阶段、验收标准及下一项任务统一见 [开发路线与 Agent 能力设计](docs/design/04-agent-development-roadmap-v0.3.md)（2026-11-13 更新，沿用原文件路径）。
+**开发主线：先完成美团订单调查与受控补推闭环，再开发库存。** 后续阶段、验收标准及下一项任务统一见 [开发路线与 Agent 能力设计](docs/design/04-agent-development-roadmap-v0.3.md)（2026-11-16 更新，沿用原文件路径）。
+
+下一项开发 **Stage 4A：订单 SOP RAG**，随后是可信案例 Memory、自然语言入口与 Context 工程、Stage 1F 调查评测、Stage 5 审批恢复/补推、Stage 6 演示交付。当前 v15 过早结束等问题已登记至 Stage 1F；先推进新能力，阻塞缺陷仍随阶段处理。路线同时列出每项能力对应的简历证据，计划不代表已实现。
 
 ## 当前进度与文档入口
 
@@ -11,7 +13,8 @@
 | [Stage 3B：日志事件](docs/stage3b-log-events.md) | 读取本地日志副本、关联事件与脱敏；[副本配置](docs/stage3b-log-snapshots.md) |
 | [Stage 3B：JDBC 只读适配](docs/stage3b-jdbc-readonly.md) | 本地订单与 POS 适配代码及自动化测试已完成，真实库联调待完成 |
 | [Stage 3C：美团模拟与模型调查](docs/stage3c-meituan-order-investigation.md) | 平台响应校验、模型选择美团/日志查询、补问恢复与 HTTP 回归；百炼真实效果仍待验收 |
-| 下一步：Stage 4（订单） | 订单 RAG/Memory；之后调查质量评估、审批恢复/补推、演示交付，再扩展库存 |
+| [Stage 3D：语义审查](docs/stage3d-semantic-review.md) | 来源语义、按需审查、受限纠正及报告分层已实现；当前 v15 真实运行仍有调查覆盖不足 |
+| 下一步：Stage 4A～4C（订单） | SOP RAG → 可信案例 Memory → 自然语言入口与预算化 Context；详细开发批次见主路线第 10 节 |
 
 美团继续模拟，尚未接入 SDK/AppKey；恢复、补推与库存同步尚未实现。JDBC 默认关闭，启用时需本地配置只读账号与门店映射。真实与模拟结果分别标记，模拟结果不能支撑真实修复执行。当前没有生产身份认证，也未完成最新 JDBC/日志组合的真实模型端到端验收。
 
@@ -79,48 +82,27 @@ POST 返回 202，报告生成前 GET report 返回 204。`contradiction` 的规
 
 当前数据为开发回归集，所有案例对开发者可见；不是独立保留集。固定 Workflow v1 不根据日志再次查询，基线较弱。不能将离线 Stub 得分差异写成“LLM 准确率提升”。真实收益评估还需更强 Workflow、独立保留集、真实脱敏样本、人工复核和多次模型运行。
 
-## 接入真实模型
+## 使用已配置的百炼模型
 
-业务数据仍是 Stub，仅将决策器替换成真实模型。先在当前终端通过环境变量设置凭据，避免写入仓库或命令历史中的字面密钥：
-
-```powershell
-# OMNIOPS_MODEL_API_KEY 通过本地安全方式注入环境；不要提交到代码仓库。
-$env:OMNIOPS_MODEL_NAME = '填写账户实际可用并支持 JSON 输出的模型名称'
-.\scripts\stage1.ps1 run -Provider remote
-# 或执行多次对照评估（会产生实际 API 调用费用）
-.\scripts\stage1.ps1 evaluate -Provider remote -Repeats 3
-```
-
-真实模型请求默认按**进程累计最多 10 次**，包含失败请求，不会自动重试。该限制独立于单任务决策预算；重启进程会重新计数，不是账户级累计额度。可用 `-MaxRequests` 显式设置本次进程上限。首次验证可只选两个场景：
+后续开发继续使用 `-Provider qwen`，默认模型为仓库配置中的 `qwen-flash`，可通过 `DASHSCOPE_MODEL` 覆盖。凭据读取 `DASHSCOPE_API_KEY`，不回退 DeepSeek；已有本地环境配置可继续使用，不需要把密钥发到聊天或写进仓库。默认 provider 仍为 stub，避免未显式选择模型时产生请求。
 
 ```powershell
-$env:OMNIOPS_MODEL_NAME = 'deepseek-flash'
-.\scripts\stage1.ps1 evaluate -Provider remote -Cases 'synced,contradiction' -MaxRequests 9
+.\scripts\stage1.ps1 build
+# 单例调查与报告导出，会调用百炼；按本次预算设置请求上限。
+.\scripts\stage1.ps1 investigate -Provider qwen -Fixture meituan-db-failure -MaxRequests 6
+# 需要交互补问时使用服务模式，与上述一次性演示二选一。
+.\scripts\stage1.ps1 run -Provider qwen -MaxRequests 6
 ```
 
-这里的 9 次适用于此前已用 1 次请求查询官方模型列表、总共允许 10 次请求的情形。重复三轮完整评估会受默认 10 次总额度限制；扩大额度前先确认预算。HTTP 失败或请求额度耗尽会中止余下评估，已完成的案例仍生成报告。错误记录只包含本地错误码，不保存上游响应体或密钥。
+本例默认使用模拟订单，不能用于证明真实美团或 POS 接入。当前调查 Prompt 为 v15，最新用户运行仍出现过早结束并被 `INSUFFICIENT_INVESTIGATION` 拦截；这是待处理的质量问题。下一项开发先进入订单 RAG，问题归入主路线 Stage 1F，不要求反复运行同一个案例才能推进。
 
-DeepSeek 官方接口于 2026-11-11 返回 `deepseek-flash`、`deepseek-v4-pro`；`deepseek` 是服务商名称，不是本次可用模型 ID。当前适配器对官方 DeepSeek 显式关闭 thinking，以便在本轮有限输出预算内取得 JSON 决策；该设置不是所有服务商通用参数。[官方模型与调用说明](https://api-docs.deepseek.com/)
+请求上限按**进程累计**，包含失败请求；重启重新计数，任务恢复时决策预算仍累计。它不是账户级费用限制，也不代表可以因重启而超出原定测试总预算。程序不自动增加额度，模型失败不切回 Stub 伪装成功。
 
-默认请求 `https://api.deepseek.com/chat/completions`；配置项 `omniops.model.endpoint` 可调整为支持该协议的 HTTPS 接口。发送 `response_format=json_object`，本地再做严格字段解析、工具授权和结论验证，不把 JSON 可解析等同于决策安全。HTTP 错误、截断、无效输出与超时安全停止，不自动切回 Stub 伪装成功。[DeepSeek JSON 输出文档](https://api-docs.deepseek.com/guides/json_mode/)
+默认地址为 `https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`。工作空间端点通过已有 `DASHSCOPE_ENDPOINT` 配置，具体允许的北京区域地址见 [Stage 3C](docs/stage3c-meituan-order-investigation.md)。这些是当前代码配置，不保证所有账户都支持相同模型或端点；本文不维护实时价格。
 
-模型可见用户问题、明确业务对象、允许工具与本次证据；看不到 fixtureId、标准答案或评分。模型决策摘要保存在 planHistory，仅供审阅，不作为事实；最终业务报告由 Java 根据证据生成。当前没有自然语言实体抽取器，实体缺失由 API 明确补齐。
+`evaluate` 是早期状态对照评估，`investigate` 是单次调查导出，两者不是同一项验收。批量调查评估、有/无 RAG 与 Memory 的对照属于后续计划。历史 DeepSeek/百炼试验记录保留在 [Stage 1B](docs/stage1b-live-probe.md)、[百炼验证](docs/stage1b-qwen-verification.md)及 Stage 1C～1E 文档，不作为当前版本的效果结论。
 
-## 更低成本的百炼候选
-
-新增 `-Provider qwen` 预设，使用北京区 `qwen-flash`，单独读取 `DASHSCOPE_API_KEY`，不会回退使用 `OMNIOPS_MODEL_API_KEY`。默认官方兼容地址为 `https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`；若控制台给出工作空间地址，可以通过 `DASHSCOPE_ENDPOINT` 指定 `https://实际工作空间ID.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions`。本预设只允许北京区官方域名。
-
-本地安全设置 `DASHSCOPE_API_KEY` 后，用已确认的调用额度启动。例如下一轮另行确认最多 10 次时：
-
-```powershell
-.\scripts\stage1.ps1 evaluate -Provider qwen -Cases 'synced,contradiction' -MaxRequests 10
-```
-
-此前 DeepSeek 试验累计使用 9/10 次；后续单独授权的百炼 10 次额度也已使用 9 次，不能通过重启进程重置用户授权额度。百炼真实调用已经执行，Prompt v3 的“已同步”场景通过；新 Prompt 下的反证调查尚未复测。此示例命令仅供下一轮另行确认额度后使用，不自动授权新增调用。
-
-2026-11-11 核对的北京区原价：单请求输入不超过 128K Token 时，普通输入 ¥0.15/百万 Token，输出 ¥1.5/百万 Token。作为计算示例，整个任务累计输入 10,000、输出 1,000 Token，且各请求都在这一档，费用约 ¥0.003；这是预算估算，非实测账单，缓存和其他优惠另算。[百炼模型与价格](https://help.aliyun.com/zh/model-studio/qwen-flash)
-
-百炼调用关闭 thinking，使用相同的严格 JSON 决策校验、证据门槛及进程请求总上限。模型变更后需重新评估，不承诺便宜模型能修复之前的调查或响应格式问题。[官方兼容接口](https://help.aliyun.com/en/model-studio/qwen-api-via-openai-chat-completions)
+模型可见用户问题、业务对象、允许工具与脱敏证据；看不到 fixtureId、标准答案和评分。当前接口仍要求显式门店/订单号，自然语言实体识别待 Stage 4C 实现。模型解释属于假设，当前业务状态由 Java 校验后生成。
 
 ## Stage 1 默认演示边界与后续变化
 

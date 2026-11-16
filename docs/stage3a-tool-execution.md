@@ -11,7 +11,7 @@
 - FixtureToolAdapter：承接原有模拟响应序列和订单占位符替换；测试场景行为保持不变。
 - ReadOnlyGateway：保留授权和目标复核，调用注册表中的工具，证据 simulated 标记由服务端配置。
 
-当前工具参数仍为 storeId/orderId，结构化入参沿用 Diagnosis.Arguments；没有开放任意 SQL、路径或时间参数。精细工具参数和真实只读适配器属于 Stage 3B，库存场景属于 Stage 3C。当前注册表只用于只读能力，不能注册业务写操作来绕过 Stage 5。
+本阶段工具参数为 storeId/orderId，结构化入参沿用 Diagnosis.Arguments；没有开放任意 SQL、路径或时间参数。后续 Stage 3B 已增加日志/JDBC 只读适配，Stage 3C 为美团订单模拟，库存延后至订单闭环交付后。不同类型工具参数的扩展进入 Stage 4A，完整顺序以[主路线](design/04-agent-development-roadmap-v0.3.md)为准。当前注册表只用于只读能力，不能注册业务写操作来绕过 Stage 5。
 
 ## 故障语义
 

@@ -1,7 +1,9 @@
 # OmniOps Agent 项目解读
 
+> **历史代码解读，当前路线以 2026-11-16 更新的[开发路线与 Agent 能力设计](design/04-agent-development-roadmap-v0.3.md)为准。** 本文主体保留早期 Stage 1 的调用链与实测记录，其中 Prompt v2、全 Stub、重启仅停止、强制 POS 复查等描述已不代表当前代码。最新现状见 [PROJECT_SUMMARY](../PROJECT_SUMMARY.md)；已增加 Stage 2 恢复、Stage 3 工具/日志/JDBC/美团模拟适配与按需语义审查。RAG、长期 Memory 和业务写操作仍待实现。
+
 > 基于当前工作区源码与 `docs/` 下验证记录整理，时间点 2026-11-11。
-> 本文只描述**已实现**的行为；设计目标与未实现项会明确标注，避免把路线图当现状。
+> 以下主体描述早期版本编写时的行为与限制，保留用于理解历史设计；当前实现以页首的新文档入口为准。
 
 ---
 
@@ -529,15 +531,11 @@ Invoke-RestMethod "http://127.0.0.1:8080/api/tasks/$($task.id)/report"
 
 ---
 
-## 13. 下一步建议（按优先级）
+## 13. 后续开发入口（2026-11-16 更新）
 
-1. **接真实只读适配器**：订单、POS、平台、日志、推送记录，保持现有 `Evidence` 契约和错误语义（`TIMEOUT/PARTIAL/UNKNOWN`）。
-2. **补齐反证调查验收**：把 `investigation-reversal`、`investigation-no-history`、`investigation-injection` 在真实模型下逐一跑通，再谈能力。
-3. **建独立保留集**：当前 13 个场景全部对开发者可见，不能作为效果证据。
-4. **增强 Workflow 基线**：让基线也具备日志驱动复查，否则“模型增益”无法成立。
-5. **补生产治理**：身份源、租户隔离、分布式任务、幂等、审计、Token 硬上限。
-6. **把环境从 Prompt 提升为契约**：目前 `executionEnvironment=SIMULATION` 在调查路径是硬编码，设计文档已建议纳入正式上下文。
-7. **报告模板参数化**：去掉 `ReportPolicy` 中写死的 Stub 限制说明，由数据源驱动。
+后续计划已统一整合到[主路线](design/04-agent-development-roadmap-v0.3.md)，本文不维护另一份优先级。下一项为 Stage 4A 订单 SOP RAG，之后依次为可信案例 Memory、自然语言入口与 Context、Stage 1F 调查质量评估、Stage 5 受控恢复/补推、Stage 6 演示交付，订单闭环完成后再做库存。
+
+早期建议中的适配器、执行环境和报告来源标记已部分落地；真实联调、强基线、保留集及身份/执行治理按主路线继续完成。当前单例诊断反馈纳入 Stage 1F，不再作为开始 RAG 开发的前置门槛。
 
 ---
 
