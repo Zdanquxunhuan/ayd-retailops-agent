@@ -335,4 +335,21 @@ class InvestigationTests {
         assertTrue(task.investigation.semanticReviews.isEmpty());
         assertEquals("UNCONFIRMED", task.report.rootCauseStatus());
     }
+
+    @Test void reportSeparatesCauseCluesFromUnresolvedRecovery() {
+        Task task = task("meituan-db-failure", Intent.DIAGNOSE_CAUSE);
+        task.investigation = new Trace();
+        task.investigation.stopCode = "INVESTIGATION_READY";
+        task.investigation.claims = List.of(new Claim("保存异常可能影响同步", List.of("log-1"), Qualification.HYPOTHESIS));
+        task.report = new Report(Outcome.UNRESOLVED, "证据不足", List.of("log-1"), "UNCONFIRMED", List.of(), "OBSERVE_ONLY", "STUB");
+        String md = InvestigationDemoRunner.render(task);
+        assertTrue(md.indexOf("保存异常可能影响同步") < md.indexOf("恢复/补推判断"));
+        assertTrue(md.contains("这不否定上方已发现的原因线索"));
+        assertTrue(md.contains("这不代表历史根因或后续重试情况已确认"));
+        task.investigation.claims = List.of();
+        task.investigation.stopCode = "SEMANTIC_REVIEW_REJECTED";
+        md = InvestigationDemoRunner.render(task);
+        assertTrue(md.contains("尚无可展示的最终调查解释"));
+        assertFalse(md.contains("保存异常可能影响同步"));
+    }
 }
